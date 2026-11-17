@@ -25,6 +25,7 @@ make audit     docs/data_audit.md
 make dataset   population, target, split, features, contract check
 make binning   docs/binning.md, models/binning.pkl
 make train     docs/validation_report.md, models/scorecard-v1/, MLflow run
+make policy-analysis   docs/policy_analysis.md (every number in docs/policy.md comes from it)
 make demo      the whole pipeline on synthetic data, written to build/demo only
 make up        PostgreSQL and the scoring API with docker compose; `make smoke`, `make loadtest`, `make down`
 make lint test

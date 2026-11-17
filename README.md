@@ -49,7 +49,7 @@ Details: [model card](docs/model_card.md) · [validation report](docs/validation
 | 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
 | 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
 | 2. Scoring API | Containerised `/score` with reason codes | Done |
-| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Planned |
+| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Analysis done, engine next |
 | 4. Monitoring | Production traffic simulator and dashboard | Planned |
 | 5. MLOps | End-to-end CI with `docker compose` | Planned |
 
@@ -106,6 +106,7 @@ make audit    # regenerates docs/data_audit.md
 make dataset  # population, target, split, features, data contract check
 make binning  # monotonic WoE bins, IV, stability, variable selection
 make train    # scorecard, challenger, out-of-time validation, model export, MLflow
+make policy-analysis  # cut-off curve, swap-set, knock-outs, limits, reject inference
 ```
 
 Loan data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic data is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
@@ -120,6 +121,8 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
 - [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
 - [ADR-003: Scoring runtime and model artifact](docs/adr/003-scoring-runtime.md)
+- [ADR-004: Profitability, loss given default and the stress case](docs/adr/004-profitability-and-lgd.md)
+- [Credit policy](docs/policy.md) and the [analysis](docs/policy_analysis.md) behind every cut-off
 - [Binning and variable selection](docs/binning.md)
 - [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

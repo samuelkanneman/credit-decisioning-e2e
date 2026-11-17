@@ -14,6 +14,7 @@ class Role(StrEnum):
     FEATURE = "feature"  # known at application time: candidate model input
     OUTCOME = "outcome"  # known after origination: target construction only
     ECONOMICS = "economics"  # pricing set by the lender: profitability only
+    CASHFLOW = "cashflow"  # realised payments: profitability and LGD only
     LEGACY_POLICY = "legacy_policy"  # Lending Club's own model output: swap-set baseline only
 
 
@@ -80,6 +81,12 @@ ACCEPTED_COLUMNS: tuple[Column, ...] = (
     Column("last_pymnt_d", Role.OUTCOME, "date"),
     Column("total_pymnt", Role.OUTCOME, "num"),
     Column("recoveries", Role.OUTCOME, "num"),
+    # cash received over the life of the loan
+    Column("funded_amnt", Role.CASHFLOW, "num"),
+    Column("total_rec_prncp", Role.CASHFLOW, "num"),
+    Column("total_rec_int", Role.CASHFLOW, "num"),
+    Column("total_rec_late_fee", Role.CASHFLOW, "num"),
+    Column("collection_recovery_fee", Role.CASHFLOW, "num"),
 )
 
 # The rejected-applications file uses different headers; map them to ours.

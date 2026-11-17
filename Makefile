@@ -1,4 +1,4 @@
-.PHONY: setup data demo dataset binning train audit lint test up down smoke loadtest
+.PHONY: setup data demo dataset binning train policy-analysis audit lint test up down smoke loadtest
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -27,6 +27,11 @@ binning:
 train:
 	uv run python -m credit_score.train --data $(PROCESSED) --models $(MODELS) \
 		--report $(DOCS)/validation_report.md $(TRAIN_ARGS)
+
+## Cut-off curve, swap-set, knock-outs, limits and reject inference
+policy-analysis:
+	uv run python -m credit_score.policy_analysis --data $(PROCESSED) --models $(MODELS) \
+		--report $(DOCS)/policy_analysis.md
 
 ## Regenerate docs/data_audit.md from the processed data
 audit:
