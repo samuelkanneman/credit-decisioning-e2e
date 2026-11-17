@@ -26,6 +26,6 @@ The scoring API has to return exactly the score training produced, start without
 
 | Option | Why not |
 | --- | --- |
-| Load the model from an MLflow server at start-up | A runtime dependency on a tracking server for something that fits in a 30 KB file |
+| Load the model from an MLflow server at start-up | A runtime dependency on a tracking server for something that fits in a 10 KB file |
 | Pickle the optbinning and regression objects | Ties the API to the training libraries and their versions, and a pickle is not reviewable |
 | Score with pandas in the API | Hundreds of megabytes of dependencies to add fifteen integers |
