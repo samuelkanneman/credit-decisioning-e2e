@@ -20,8 +20,8 @@ Si falta tiempo se recorta, en este orden: nube opcional, workflow de KNIME, cha
 | # | Decisión | Recomendación | Por qué |
 | --- | --- | --- | --- |
 | D1 | Fuente de los datos | Mirror de Kaggle vía API (`kaggle datasets download`), con hash verificado | Requiere token de Kaggle propio; el CI no descarga datos, usa una muestra sintética |
-| D2 | Períodos del split | Decidir **después** de medir maduración (ver R1) | El split 2014–16 / 2017 / 2018 probablemente no se sostiene |
-| D3 | Definición del target | *Bad* = Charged Off / Default con último pago dentro de N meses desde la emisión | El archivo es una foto final, no trae historia mensual (ver R2) |
+| D2 | Períodos del split | Desarrollo 2013–2015, OOT 2016, producción simulada 2017 | 2018 no madura (ver R1 y ADR-002) |
+| D3 | Definición del target | *Bad* = Charged Off / Default con último pago hasta el mes 8 (90+ días hacia el mes 12) | El archivo es una foto final, no trae historia mensual (ver R2) |
 | D4 | Base de logs | PostgreSQL | Dos servicios y el simulador escriben a la vez; DuckDB es de un solo escritor. DuckDB queda para el análisis offline sobre parquet |
 | D5 | Versión de Python | 3.12, fijada en `.python-version` | Todas las librerías del stack la soportan hoy |
 | D6 | Gestor de dependencias | uv, con workspace (un `pyproject.toml` por servicio) | Lockfile único, imágenes livianas por servicio |
@@ -49,7 +49,7 @@ Si falta tiempo se recorta, en este orden: nube opcional, workflow de KNIME, cha
 
 ## Fase 0: cimientos (`v0.0`)
 
-- [ ] Cerrar D1–D9 (cerradas: D1, D4–D9; D2 y D3 dependen de la auditoría de datos).
+- [x] Cerrar D1–D9. Split y target en `docs/adr/002-target-and-split.md`.
 - [x] Esqueleto del monorepo: `src/credit_score/`, `tests/`, `docs/`. Las demás carpetas se crean en la fase que les da contenido.
 - [x] `pyproject.toml` + `uv.lock`, ruff, pytest, `.gitignore` (con `data/` y `mlruns/`).
 - [x] `make data`: descarga, verificación de SHA-256, conversión a parquet.
@@ -59,7 +59,7 @@ Si falta tiempo se recorta, en este orden: nube opcional, workflow de KNIME, cha
 - [x] CI mínimo: ruff + pytest. Badge en el README.
 - [x] README inicial: una frase, diagrama Mermaid, estado por fase.
 - [x] ADR-001 (dataset).
-- [ ] ADR-002 (split temporal), después de la auditoría.
+- [x] ADR-002 (target y split temporal).
 
 Hecho cuando: un clon limpio corre `make data && make test` sin intervención y el CI está verde.
 

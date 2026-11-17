@@ -6,7 +6,7 @@ End-to-end credit decisioning system: scorecard → scoring API → rules engine
 
 The point of this repository is the engineering and the credit policy around a model, not the model's AUC: how a score is built to risk standards, served, wrapped in a policy that is versioned as code, and monitored once it is making decisions.
 
-> **Status: work in progress.** Phase 0 is in place; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
+> **Status: work in progress.** Phase 0 is done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
 
 ## Architecture
 
@@ -30,7 +30,7 @@ flowchart LR
 
 | Phase | Deliverable | Status |
 | --- | --- | --- |
-| 0. Foundations | Repo skeleton, reproducible data pipeline, CI | In progress |
+| 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
 | 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Planned |
 | 2. Scoring API | Containerised `/score` with reason codes | Planned |
 | 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Planned |
@@ -59,4 +59,5 @@ Data is never committed. `make data` fetches it from the source and checks it ag
 ## Design decisions
 
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
+- [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target
