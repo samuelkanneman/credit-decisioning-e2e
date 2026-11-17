@@ -1,4 +1,4 @@
-.PHONY: setup data sample audit lint test
+.PHONY: setup data sample dataset audit lint test
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -15,6 +15,10 @@ data:
 sample:
 	uv run python -m credit_score.data.synthetic --out $(RAW) --rows 20000
 	uv run python -m credit_score.data.prepare --raw $(RAW) --out $(PROCESSED)
+
+## Build the modelling dataset: population, target, split, features, contract check
+dataset:
+	uv run python -m credit_score.dataset --data $(PROCESSED)
 
 ## Regenerate docs/data_audit.md from the processed data
 audit:

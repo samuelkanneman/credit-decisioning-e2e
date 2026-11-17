@@ -31,7 +31,7 @@ flowchart LR
 | Phase | Deliverable | Status |
 | --- | --- | --- |
 | 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
-| 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Planned |
+| 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | In progress |
 | 2. Scoring API | Containerised `/score` with reason codes | Planned |
 | 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Planned |
 | 4. Monitoring | Production traffic simulator and dashboard | Planned |
@@ -52,6 +52,7 @@ To work with the real data you need a Kaggle account and an [API token](https://
 ```bash
 make data     # downloads from Kaggle (~650 MB), verifies SHA-256, builds parquet
 make audit    # regenerates docs/data_audit.md
+make dataset  # population, target, split, features, data contract check
 ```
 
 Data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic sample is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.

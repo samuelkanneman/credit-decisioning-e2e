@@ -3,10 +3,7 @@
 Writes ``docs/data_audit.md``. The numbers decide the temporal split and the
 target definition, so the report is regenerated from data rather than typed.
 
-The file is a single snapshot with the final loan status and the month of the
-last payment, not a monthly delinquency history. "Bad within W months" is
-therefore approximated: a charged-off loan whose last payment came at month
-``m`` on book reached 90 days past due at about ``m + 4``.
+The target proxy is defined in ``credit_score.target``.
 """
 
 import argparse
@@ -14,22 +11,17 @@ from pathlib import Path
 
 import pandas as pd
 
-MONTHS_TO_90DPD = 4  # last payment at month m -> first missed at m+1 -> 90 dpd at m+4
+from credit_score.target import MONTHS_TO_90DPD, bad_within, charged_off
+
 WINDOWS = (12, 18, 24)
-
-
-def _months(later: pd.Series, earlier: pd.Series) -> pd.Series:
-    return (later.dt.year - earlier.dt.year) * 12 + (later.dt.month - earlier.dt.month)
 
 
 def add_proxy_bad(df: pd.DataFrame) -> pd.DataFrame:
     """Add ``charged_off`` and one ``bad_<W>m`` flag per window in ``WINDOWS``."""
     df = df.copy()
-    df["charged_off"] = df["loan_status"].str.contains("Charged Off|Default", na=False)
-    # A charged-off loan with no payment date never paid at all.
-    paid_months = _months(df["last_pymnt_d"], df["issue_d"]).fillna(0)
+    df["charged_off"] = charged_off(df)
     for w in WINDOWS:
-        df[f"bad_{w}m"] = df["charged_off"] & (paid_months + MONTHS_TO_90DPD <= w)
+        df[f"bad_{w}m"] = bad_within(df, w)
     return df
 
 
@@ -80,7 +72,7 @@ def build_report(accepted: pd.DataFrame, rejected: pd.DataFrame) -> str:
                 f"{rejected['application_d'].max():%Y-%m}.\n"
                 f"- Snapshot month (latest payment seen): {snapshot:%Y-%m}.",
                 "## Cohorts by issue year",
-                "`% bad Wm` is the proxy described in `credit_score.data.audit`: charged off, "
+                "`% bad Wm` is the proxy described in `credit_score.target`: charged off, "
                 f"with the last payment no later than month W − {MONTHS_TO_90DPD} on book. "
                 "A cohort needs about W + 2 months of observation for it to be complete.",
                 to_markdown(cohort_table(df, "Y")),

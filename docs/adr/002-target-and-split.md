@@ -16,9 +16,11 @@ The data is a single snapshot taken in March 2019. It holds each loan's final st
 
 | Set | Issued | Loans | Bads | Bad rate |
 | --- | --- | --- | --- | --- |
-| Development | 2013–2015 | 791,538 | 24,629 | 3.11% |
-| Out-of-time validation | 2016 | 434,407 | 17,354 | 3.99% |
-| Simulated production | 2017 | 443,579 | 16,710 | 3.77% |
+| Development | 2013–2015 | 791,027 | 24,613 | 3.11% |
+| Out-of-time validation | 2016 | 425,618 | 17,088 | 4.01% |
+| Simulated production | 2017 | 401,154 | 15,124 | 3.77% |
+
+**Population.** Individual applications only. Joint applications (51,725 loans, 3.1% of the split years, almost all from 2016 on) are excluded: their income and debt-to-income describe two borrowers in separate columns, which is a different scorecard.
 
 **Exclusions.** Loans issued before 2013 (small volumes and an earlier credit policy, including the "Does not meet the credit policy" loans of 2007–2010) and loans issued in 2018 (not matured).
 
@@ -26,7 +28,7 @@ The data is a single snapshot taken in March 2019. It holds each loan's final st
 
 - Every cohort in the split has at least 15 months of observation, enough for a loan that went bad inside the window to have been charged off by the snapshot. Monthly bad rates stay flat through the end of 2017 and only start to truncate for loans issued from March 2018.
 - With that much observation there is no indeterminate class: a loan that is merely late at the snapshot was current through its first 12 months.
-- The bad rate rises from 2.65% (2013) to 3.99% (2016). The out-of-time set is riskier than development, so calibration drift is expected and is part of what validation and monitoring have to show.
+- The bad rate rises from 2.65% (2013) to about 4% (2016). The out-of-time set is riskier than development, so calibration drift is expected and is part of what validation and monitoring have to show.
 - The target is a proxy. It will miss loans that reached 90 days past due inside the window and then cured, and its timing is exact only to the month. It measures early default, not lifetime loss; profitability analysis in Phase 3 uses realised payments instead.
 - The monitoring simulator replays 2017 month by month and reveals each cohort's outcome 14 months after issue.
 
