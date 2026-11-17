@@ -1,6 +1,6 @@
 # AGENTS.md — credit-decisioning-e2e
 
-Status: active · 2026-11-17 · Phase 1 (score) in progress.
+Status: active · 2026-11-17 · Phase 1 (score) done; Phase 2 (scoring API) next.
 
 This project is built with [data-science-harness](https://github.com/samuelkanneman/data-science-harness) (commit `644c4f2`), the author's method for doing data science with coding agents, and adopts its credit-risk profile. The harness is referenced, not copied: read its `docs/metodo.md` and `docs/perfiles/riesgo-crediticio/` for the rules summarised here.
 
@@ -23,6 +23,7 @@ make data      download, verify hashes, convert to parquet (reports rows dropped
 make audit     docs/data_audit.md
 make dataset   population, target, split, features, contract check
 make binning   docs/binning.md, models/binning.pkl
+make train     docs/validation_report.md, models/scorecard-v1/, MLflow run
 make sample    synthetic raw data instead of `make data`, for tests and CI
 make lint test
 ```
