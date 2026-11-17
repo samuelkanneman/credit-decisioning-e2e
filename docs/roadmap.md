@@ -49,16 +49,17 @@ Si falta tiempo se recorta, en este orden: nube opcional, workflow de KNIME, cha
 
 ## Fase 0: cimientos (`v0.0`)
 
-- [ ] Cerrar D1–D9.
-- [ ] Esqueleto del monorepo: `src/credit_score/`, `services/`, `policy/`, `simulator/`, `monitoring/`, `docs/`, `tests/`, `notebooks/`.
-- [ ] `pyproject.toml` + `uv.lock`, ruff, pytest, pre-commit, `.gitignore` (con `data/` y `mlruns/`).
-- [ ] `make data`: descarga, verificación de SHA-256, conversión a parquet.
+- [ ] Cerrar D1–D9 (cerradas: D1, D4–D9; D2 y D3 dependen de la auditoría de datos).
+- [x] Esqueleto del monorepo: `src/credit_score/`, `tests/`, `docs/`. Las demás carpetas se crean en la fase que les da contenido.
+- [x] `pyproject.toml` + `uv.lock`, ruff, pytest, `.gitignore` (con `data/` y `mlruns/`).
+- [x] `make data`: descarga, verificación de SHA-256, conversión a parquet.
 - [ ] Notebook `00_data_audit`: filas por mes de emisión, estados, **meses de maduración por cohorte** (resuelve R1 y D2), nulos por columna y por año.
 - [ ] Lista blanca de variables candidatas (`docs/data_dictionary.md`) con el momento en que se conoce cada una.
-- [ ] Generador de muestra sintética con el mismo esquema, para tests y CI.
-- [ ] CI mínimo: ruff + pytest. Badge en el README.
-- [ ] README inicial: una frase, diagrama Mermaid, estado por fase.
-- [ ] ADR-001 (dataset) y ADR-002 (split temporal).
+- [x] Generador de muestra sintética con el mismo esquema, para tests y CI.
+- [x] CI mínimo: ruff + pytest. Badge en el README.
+- [x] README inicial: una frase, diagrama Mermaid, estado por fase.
+- [x] ADR-001 (dataset).
+- [ ] ADR-002 (split temporal), después de la auditoría.
 
 Hecho cuando: un clon limpio corre `make data && make test` sin intervención y el CI está verde.
 
