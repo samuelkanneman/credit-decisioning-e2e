@@ -134,7 +134,7 @@ Hecho cuando: `make simulate && make dashboard` muestra los 12 meses, con perfor
 - [x] Primera promoción real: `scorecard-v1.1` (experimento 002), recalibración que pidió el monitoreo. Cumplió los 6 criterios; con el modelo nuevo, el monitoreo pasa de "recalibrar" a "monitorear".
 - [x] README final: frase, GIF de 22 s, resultados con contexto de negocio, diagrama, quickstart y links a `docs/`.
 - [x] ADRs: scorecard y no solo GBM (experimento 001 y ADR-003), GoRules (ADR-005), PostgreSQL (D4 y ADR-005), monitoreo (ADR-006).
-- [ ] Tags `v0.0` … `v0.5`: pendientes de confirmación.
+- [x] Tags `v0.0` … `v0.5`, uno por fase.
 - [ ] Opcional: despliegue de la API en capa gratuita. No se hizo.
 
 Hecho cuando: un tercero clona, corre `make data && docker compose up` y ve una decisión en el tablero sin leer más que el README.
