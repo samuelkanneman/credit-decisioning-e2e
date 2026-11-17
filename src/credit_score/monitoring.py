@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from credit_score import metrics, scoring
+from credit_score import metrics, registry, scoring
 
-MODEL_DIR = Path(__file__).resolve().parents[2] / "models" / "scorecard-v1"
+MODEL_DIR = registry.champion_dir()
 
 # Thresholds (docs/retraining_criteria.md)
 PSI_WATCH, PSI_INVESTIGATE = 0.10, 0.25
@@ -85,7 +85,9 @@ def save_directory(frames: dict[str, pd.DataFrame], path: Path) -> None:
 
 
 def prepare(frames: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    dec = frames["decisions"].copy()
+    # The canonical KS breaks ties with a seeded jitter applied in row order, so rows need
+    # an order that does not depend on how the database returned them.
+    dec = frames["decisions"].sort_values("application_id").reset_index(drop=True)
     dec["received_at"] = pd.to_datetime(dec["received_at"], utc=True)
     dec["month"] = dec["received_at"].dt.strftime("%Y-%m")
     out = frames["outcomes"].copy()
@@ -371,6 +373,22 @@ def alerts(stab, perf, ops, reference) -> pd.DataFrame:
                     hi,
                     "alert",
                     "Bad rate outside the calibration band: PD needs recalibration",
+                )
+            )
+    lo, hi = CALIBRATION_BAND
+    as_of = perf["booked"].index.max() if len(perf["booked"]) else None
+    for band, row in perf["bands"].iterrows():
+        ratio = row["bad rate %"] / row["predicted %"]
+        if row["bads"] >= MIN_BADS and not lo <= ratio <= hi:
+            found.append(
+                _alert(
+                    as_of,
+                    "performance",
+                    f"observed / predicted, band {band}",
+                    ratio,
+                    hi if ratio > hi else lo,
+                    "investigate",
+                    f"Band {band} outside the calibration band, matured cohorts pooled",
                 )
             )
     approval_ref = reference["policy"]["approval_rate"] * 100

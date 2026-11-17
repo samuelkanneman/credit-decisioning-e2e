@@ -1,0 +1,50 @@
+{
+  "model_version": "scorecard-v1.1",
+  "parent": "scorecard-v1",
+  "trained_at": "2026-11-17T15:33:48+00:00",
+  "code_commit": "ff908e6fe0b7372db0b8ffd46841bee1c2d291ee",
+  "change": "Recalibration of scorecard-v1: points and bands unchanged, PD mapping refitted on the 'oot' split (425,618 loans).",
+  "data_sha256": {
+    "modeling.parquet": "042df2777f40508a2657f5956c3c2ca8d2969b525461a7bc3eaad9c4f6bd4bbb"
+  },
+  "target": "bad_12m",
+  "variables": [
+    "acc_open_past_24mths",
+    "fico",
+    "mths_since_recent_inq",
+    "mo_sin_rcnt_tl",
+    "inq_last_6mths",
+    "dti",
+    "mo_sin_old_rev_tl_op",
+    "bc_open_to_buy",
+    "purpose",
+    "tot_hi_cred_lim",
+    "loan_to_income",
+    "home_ownership",
+    "annual_inc",
+    "mths_since_recent_bc",
+    "term"
+  ],
+  "metrics": {
+    "fico_dev_auc": 0.5807915067892419,
+    "fico_dev_ks": 12.232929074687515,
+    "fico_oot_auc": 0.5781586827568762,
+    "fico_oot_ks": 11.724223301164471,
+    "lc_sub_grade_dev_auc": 0.7003261472042088,
+    "lc_sub_grade_dev_ks": 28.841143556803733,
+    "lc_sub_grade_oot_auc": 0.7072428422257941,
+    "lc_sub_grade_oot_ks": 29.580697220490272,
+    "scorecard_dev_auc": 0.6848517258499041,
+    "scorecard_dev_ks": 26.744457868621435,
+    "scorecard_oot_auc": 0.6719736496036166,
+    "scorecard_oot_ks": 24.477642148688577,
+    "lightgbm_dev_auc": 0.7001833417802213,
+    "lightgbm_dev_ks": 29.180806638289265,
+    "lightgbm_oot_auc": 0.6818965589383412,
+    "lightgbm_oot_ks": 26.148176306004782,
+    "scorecard_score_psi": 0.0025836192350229973,
+    "candidate_eval_auc": 0.6719736496036167,
+    "candidate_eval_ks": 24.477642148688577,
+    "candidate_eval_observed_over_predicted": 1.0000000000000009
+  }
+}

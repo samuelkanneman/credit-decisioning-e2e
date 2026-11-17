@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from credit_score import scorecard
+from credit_score import registry, scorecard
 from credit_score.config import TARGET
 from credit_score.data.audit import to_markdown
 from credit_score.target import bad_within, charged_off
@@ -342,7 +342,7 @@ def reject_inference(accepted: pd.DataFrame, rejected: pd.DataFrame) -> dict:
 
 
 def run(data: Path, models: Path) -> dict:
-    card = json.loads((models / "scorecard-v1" / "card.json").read_text())
+    card = json.loads((registry.champion_dir(models) / "card.json").read_text())
     modeling = pd.read_parquet(data / "modeling.parquet")
     accepted = pd.read_parquet(data / "accepted.parquet")
     cash = accepted.set_index("id")[["total_rec_prncp", "collection_recovery_fee", "emp_length"]]

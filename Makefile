@@ -1,4 +1,4 @@
-.PHONY: setup data demo dataset binning train reference policy-analysis policy-diff simulate monitor evidently audit lint test up down smoke loadtest
+.PHONY: setup data demo dataset binning train reference policy-analysis policy-diff simulate monitor evidently recalibrate promote audit lint test up down smoke loadtest
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -31,6 +31,16 @@ train:
 ## Development distributions and metrics monitoring compares against (models/scorecard-v1/reference.json)
 reference:
 	uv run python -m credit_score.reference --data $(PROCESSED) --models $(MODELS)
+
+## Build a recalibrated candidate: champion's points and bands, PD refitted on FIT_SPLIT (default oot)
+recalibrate:
+	uv run python -m credit_score.promotion recalibrate --to $(CANDIDATE) --fit-split $(or $(FIT_SPLIT),oot) \
+		--data $(PROCESSED) --models $(MODELS)
+
+## Compare CANDIDATE with the champion on the prod split; promote it if every criterion is met
+promote:
+	uv run python -m credit_score.promotion evaluate --candidate $(CANDIDATE) --promote \
+		--data $(PROCESSED) --models $(MODELS)
 
 ## Cut-off curve, swap-set, knock-outs, limits and reject inference
 policy-analysis:

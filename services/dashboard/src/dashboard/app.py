@@ -15,9 +15,9 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from credit_score import monitoring
+from credit_score import monitoring, registry
 
-MODEL_DIR = Path(os.environ.get("MODEL_DIR", monitoring.MODEL_DIR))
+MODEL_DIR = Path(os.environ.get("MODEL_DIR") or registry.champion_dir())
 
 # Reference palette (dataviz skill): categorical slots in fixed order, a neutral for
 # reference values, status colours reserved for alerts and always paired with a label.

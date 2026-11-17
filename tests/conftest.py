@@ -1,14 +1,13 @@
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from credit_score import policy_analysis, scoring
+from credit_score import policy_analysis, registry, scoring
 from credit_score.bounds import DERIVED
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / "models" / "scorecard-v1"
+MODEL_DIR = registry.champion_dir()
 
 
 def _value_in_bin(label: str, spec: dict, low: float, rng) -> object:

@@ -14,8 +14,8 @@ FROM ${PYTHON_IMAGE}
 RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
-COPY models/scorecard-v1/card.json models/scorecard-v1/metadata.json /app/model/
-ENV PATH="/app/.venv/bin:$PATH" MODEL_DIR=/app/model PYTHONUNBUFFERED=1
+COPY models/ /app/models/
+ENV PATH="/app/.venv/bin:$PATH" MODELS_DIR=/app/models PYTHONUNBUFFERED=1
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \

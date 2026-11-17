@@ -4,59 +4,41 @@
 
 End-to-end credit decisioning system: scorecard → scoring API → rules engine → monitoring, built on public Lending Club data.
 
-The point of this repository is the engineering and the credit policy around a model, not the model's AUC: how a score is built to risk standards, served, wrapped in a policy that is versioned as code, and monitored once it is making decisions.
+The point is the engineering and the credit policy around a model, not its AUC: a score built to risk standards, served behind a contract, wrapped in a policy versioned as code, monitored as if it were deciding real loans, and replaced through a written promotion process when monitoring says so.
 
-> **Status: work in progress.** Phases 1 to 4 are done: score, scoring API, credit policy and monitoring. Phase 5 are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
+![An application goes in, is decided with its reasons, and shows up in the monitoring dashboard](docs/images/demo.gif)
+
+## What it shows
+
+| Question | Answer |
+| --- | --- |
+| Does the score rank risk on loans it never saw? | Trained on 2013–2015, tested on 2016: AUC 0.672 and KS 24.5%, against 0.578 and 11.7% for the bureau score alone. The bad rate falls from 9.4% in the riskiest decile to 1.0% in the safest, with no inversions. |
+| What is the policy worth? | Approving the same 52.4% of applicants as a bureau-score ranking, charge-offs fall from 10.6% to 8.6% and the margin on the amount lent rises from 1.8% to 2.7%: $65k more profit per 1,000 applicants, measured on loans that ran their full term. |
+| Where do the cut-offs come from? | Below a score of 580 every 5-point slice loses money; from 595 every slice still makes money with 34% more defaults. In between, a reviewer decides. Each rule cites its number in [the policy](docs/policy.md). |
+| What happened in "production"? | Replaying 2017, monitoring said **recalibrate, not retrain**: the ranking held, but loans went bad 1.27 times as often as predicted. The recalibrated `scorecard-v1.1` met every preregistered criterion (observed / predicted 1.015, no decision changed) and was promoted. |
+| Can it see a change in who applies? | A riskier channel injected from July cut approval by 10 points and fired a knock-out 58% more often, while score PSI against development *fell*: the new applicants pulled the distribution back towards development. A second, rolling reference caught it. |
+
+Gradient boosting on the same variables buys one point of AUC; the scorecard keeps a points table, reason codes and a pure-Python runtime for that price. Details in the [model card](docs/model_card.md).
 
 ## Architecture
 
 ```mermaid
 flowchart LR
     raw[(Lending Club<br/>public data)] --> train[Scorecard training<br/>WoE · calibration · OOT validation]
-    train --> registry[(Model registry<br/>MLflow)]
-    registry --> score[Score API<br/>FastAPI]
+    train --> models[(Model registry<br/>registry.json · MLflow)]
+    models --> score[Score API<br/>FastAPI]
     app([Application]) --> decision[Decision service]
     decision -->|features| score
     score -->|score · PD · reasons| decision
     policy[Policy as code<br/>GoRules JDM] --> decision
     decision -->|approve · review · reject| app
-    decision --> logs[(Decision logs<br/>PostgreSQL)]
+    decision --> logs[(Decision log<br/>PostgreSQL)]
     sim[Traffic simulator] --> decision
-    logs --> monitor[Monitoring<br/>PSI · KS · dashboard]
-    monitor -.->|retraining criteria| train
+    logs --> monitor[Monitoring<br/>job · dashboard · Evidently]
+    monitor -.->|recalibrate · retrain| train
 ```
 
-## Results so far
-
-A 15-variable scorecard trained on 2013–2015 loans and validated on loans issued in 2016, with success criteria written down before training.
-
-| Model | AUC, out-of-time | KS, out-of-time |
-| --- | --- | --- |
-| FICO alone | 0.578 | 11.7% |
-| **Scorecard** | **0.672** | **24.5%** |
-| LightGBM challenger, same variables | 0.682 | 26.1% |
-
-- The bad rate falls from 9.4% in the riskiest decile to 1.0% in the safest, with no inversions, on loans the model never saw.
-- Gradient boosting buys one point of AUC. The scorecard keeps a points table and reason codes for that price.
-- The ranking holds out of time but the PD does not: the model predicts 3.0% where 4.0% defaulted. The population did not change (score PSI 0.003); the level of risk did. That gap is what the monitoring phase is built to catch.
-- The policy built on that score approves 48.6% of applicants at a 2.8% margin on matured loans, against 1.8% for a bureau-score ranking that approves as many; every cut-off is justified by the loans just above and below it, under a stress case of 34% more defaults.
-
-- Replaying 2017 through the stack, monitoring recommends **recalibrating, not retraining**: booked loans went bad 1.27 times as often as predicted while the score distribution barely moved. With a riskier channel injected from July, approval fell 10 points in a month and a knock-out fired 58% more often, yet score PSI against development *fell*: the new applicants pulled the distribution back towards development. A fixed-reference PSI alone would have missed it, and the broker loans the policy still approved went bad at 3.4% against 1.8% for direct ones.
-
-Details: [model card](docs/model_card.md) · [validation report](docs/validation_report.md). · [monitoring](docs/retraining_criteria.md)
-
-![Monitoring dashboard: score PSI against development and against the previous three months, with the July drift](docs/images/dashboard-stability.png)
-
-## Roadmap
-
-| Phase | Deliverable | Status |
-| --- | --- | --- |
-| 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
-| 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
-| 2. Scoring API | Containerised `/score` with reason codes | Done |
-| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Done |
-| 4. Monitoring | Production traffic simulator and dashboard | Done |
-| 5. MLOps | End-to-end CI with `docker compose` | Planned |
+Four containers (PostgreSQL, scoring API, decision service, dashboard) start with one command. CI lints, tests, runs the whole pipeline on synthetic data, builds the images, starts the stack, sends decisions, replays traffic and checks what lands in the logs.
 
 ## Quickstart
 
@@ -66,7 +48,7 @@ Requires Docker. The trained scorecard and the policy are in the repository, so 
 
 ```bash
 make up       # PostgreSQL, scoring API (:8000/docs), decision service (:8001/docs), dashboard (:8501)
-make smoke    # checks both services end to end
+make smoke    # checks the scoring API and the decision service end to end
 ```
 
 Ask for a decision:
@@ -86,8 +68,8 @@ curl -s localhost:8001/decide -H 'Content-Type: application/json' -d '{
   "decision": "APPROVE", "requested_amount": 30000.0, "approved_amount": 24000.0,
   "reasons": [{"source": "policy", "code": "L1",
                "description": "Amount limited to 40% of annual income for this risk band"}],
-  "score": 635, "pd": 0.006, "band": "A", "arm": "champion",
-  "model_version": "scorecard-v1", "policy_version": "policy-v1",
+  "score": 635, "pd": 0.0089, "band": "A", "arm": "champion",
+  "model_version": "scorecard-v1.1", "policy_version": "policy-v1",
   "trace": {"knockout": null, "decision_rule": "S3", "limit_rule": "L1", "max_loan_to_income": 0.4}
 }
 ```
@@ -129,9 +111,23 @@ make binning  # monotonic WoE bins, IV, stability, variable selection
 make train    # scorecard, challenger, out-of-time validation, model export, MLflow
 make policy-analysis  # cut-off curve, swap-set, knock-outs, limits, reject inference
 make policy-diff      # how many decisions a change in policy/ moves
+make recalibrate CANDIDATE=scorecard-v1.2  # same points, PD refitted
+make promote CANDIDATE=scorecard-v1.2      # compare with the champion; promote if every criterion passes
 ```
 
 Loan data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic data is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
+
+## Project phases
+
+| Phase | Deliverable | Status |
+| --- | --- | --- |
+| 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
+| 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
+| 2. Scoring API | Containerised `/score` with reason codes | Done |
+| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Done |
+| 4. Monitoring | Production traffic simulator and dashboard | Done |
+| 5. MLOps | End-to-end CI, model lifecycle and promotion | Done |
+
 
 ## How it is built
 
@@ -139,7 +135,7 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 
 ## Design decisions
 
-- [Model card](docs/model_card.md)
+- [Model card](docs/model_card.md) and the [model lifecycle](docs/model_lifecycle.md): how a candidate is compared with the champion and promoted
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
 - [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
 - [ADR-003: Scoring runtime and model artifact](docs/adr/003-scoring-runtime.md)
@@ -147,7 +143,7 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 - [Credit policy](docs/policy.md) and the [analysis](docs/policy_analysis.md) behind every cut-off
 - [ADR-005: Rules engine and decision service](docs/adr/005-rules-engine.md)
 - [ADR-006: Monitoring design](docs/adr/006-monitoring.md) and the [thresholds and retraining criteria](docs/retraining_criteria.md)
-- Monitoring reports: [2017 as it happened](docs/monitoring_report.md), [with an injected channel](docs/monitoring_report_drift.md)
+- Monitoring reports: [2017 as it happened](docs/monitoring_report.md), [with an injected channel](docs/monitoring_report_drift.md), [after recalibration](docs/monitoring_report_v1.1.md)
 - [Binning and variable selection](docs/binning.md)
-- [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
+- Experiments, each preregistered before it ran: [001, scorecard and challenger](docs/experiments/001-scorecard.md) · [002, recalibration](docs/experiments/002-recalibration.md) and its [promotion report](docs/promotion_scorecard-v1.1.md)
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

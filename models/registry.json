@@ -1,0 +1,15 @@
+{
+  "champion": "scorecard-v1.1",
+  "history": [
+    {
+      "version": "scorecard-v1",
+      "promoted_on": "2026-11-17",
+      "evidence": "docs/experiments/001-scorecard.md"
+    },
+    {
+      "version": "scorecard-v1.1",
+      "promoted_on": "2026-11-17",
+      "evidence": "docs/experiments/002-recalibration.md"
+    }
+  ]
+}

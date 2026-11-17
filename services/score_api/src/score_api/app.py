@@ -16,16 +16,15 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Header
 
+from credit_score import registry
 from credit_score.bounds import DERIVED
 from credit_score.scoring import required_inputs, score_application
 from score_api.schemas import Health, ModelInfo, ScoreResponse, build_request_model
 from score_api.store import RequestLog
 
-DEFAULT_MODEL_DIR = "models/scorecard-v1"
-
 
 def create_app(model_dir: str | Path | None = None, request_log: RequestLog | None = None):
-    model_dir = Path(model_dir or os.environ.get("MODEL_DIR", DEFAULT_MODEL_DIR))
+    model_dir = Path(model_dir or os.environ.get("MODEL_DIR") or registry.champion_dir())
     card = json.loads((model_dir / "card.json").read_text())
     metadata = json.loads((model_dir / "metadata.json").read_text())
     if card["version"] != metadata["model_version"]:

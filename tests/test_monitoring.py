@@ -47,6 +47,7 @@ def test_underpredicted_risk_asks_for_recalibration(frames_factory):
     result = monitoring.run(frames, "2018-06", MODEL_DIR)
     calibration = result["alerts"][result["alerts"]["indicator"] == "observed / predicted"]
     assert len(calibration) >= 2
+    assert result["alerts"]["indicator"].str.startswith("observed / predicted, band").any()
     assert result["recommendation"]["action"] == "recalibrate"
 
 
@@ -104,3 +105,11 @@ def test_report_and_parquet_roundtrip(calibrated, tmp_path):
     pd.testing.assert_frame_equal(again["decisions"], calibrated["decisions"], check_dtype=False)
     report = monitoring.build_report(monitoring.run(again, "2018-06", MODEL_DIR))
     assert report.startswith("# Monitoring report") and "## Vintages" in report
+
+
+def test_metrics_do_not_depend_on_row_order(calibrated):
+    shuffled = {**calibrated, "decisions": calibrated["decisions"].sample(frac=1, random_state=3)}
+    a = monitoring.run(monitoring.prepare(calibrated), "2018-06", MODEL_DIR)
+    b = monitoring.run(monitoring.prepare(shuffled), "2018-06", MODEL_DIR)
+    pd.testing.assert_frame_equal(a["performance"]["bands"], b["performance"]["bands"])
+    pd.testing.assert_frame_equal(a["performance"]["booked"], b["performance"]["booked"])

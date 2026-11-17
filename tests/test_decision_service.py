@@ -1,7 +1,6 @@
 """Decision service wired to the real scoring API in process, with an in-memory log."""
 
 import json
-from pathlib import Path
 
 import httpx
 import pytest
@@ -11,9 +10,10 @@ from fastapi.testclient import TestClient
 from score_api.app import create_app as create_score_app
 from score_api.store import RequestLog
 
+from credit_score import registry
 from credit_score.policy_engine import CHALLENGER, assign_arm
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / "models" / "scorecard-v1"
+MODEL_DIR = registry.champion_dir()
 GOOD = {
     "acc_open_past_24mths": 2,
     "fico": 740,
@@ -75,7 +75,7 @@ def test_approval_with_full_trace(service):
     assert body["decision"] == "APPROVE" and body["approved_amount"] == 10_000
     assert body["reasons"] == [] and body["arm"] == "champion"
     assert body["trace"]["decision_rule"] == "S3" and body["trace"]["limit_rule"] == "L1"
-    assert body["model_version"] == "scorecard-v1" and body["policy_version"] == "policy-v1"
+    assert body["model_version"] == registry.champion() and body["policy_version"] == "policy-v1"
     assert body["score"] == sum(body["trace"]["score_points"].values())
     record = log.rows[app_id]
     assert record["decision"] == "APPROVE" and record["application"]["emp_length"] == 6

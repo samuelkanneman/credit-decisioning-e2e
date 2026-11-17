@@ -1,4 +1,6 @@
-# Model card: scorecard-v1
+# Model card: scorecard-v1.1
+
+Serving version: `scorecard-v1.1`, the points and bands of `scorecard-v1` with the PD mapping refitted on 2016 loans ([experiment 002](experiments/002-recalibration.md)). Scores, bands, reason codes and decisions are identical between the two; only the PD differs. Figures below are for `scorecard-v1` unless marked.
 
 ## Purpose
 
@@ -53,7 +55,7 @@ Cut-offs are the quintiles of the development score and stay fixed: E below 575,
 
 ## Limitations
 
-- **The PD is not reliable out of period.** Calibrated on 2013–2015, the model predicts 3.01% for 2016 loans against 4.01% observed. The ranking holds; the level does not. Recalibrate before using the PD for pricing or provisioning.
+- **The PD level depends on the period it was fitted on.** `scorecard-v1`, calibrated on 2013–2015, predicted 3.01% for 2016 loans against 4.01% observed. `scorecard-v1.1`, recalibrated on 2016, predicts 3.72% for 2017 loans against 3.77% observed, within 5% in every band. 2016 was the worst year of the period, so if conditions improve v1.1 will over-predict; monitoring watches observed against predicted by band.
 - **Discrimination is moderate.** Lending Club had already screened the population (minimum FICO of 660), which restricts the range of every variable, and the lender's grade is excluded.
 - **Selection bias.** The model saw only loans Lending Club approved. Its behaviour on applicants that lender rejected is unknown; reject inference is addressed in the policy phase.
 - **The target is a proxy** for early default, exact to the month, and misses loans that reached 90 days past due and then cured. It is not a lifetime loss measure.

@@ -128,12 +128,14 @@ Hecho cuando: `make simulate && make dashboard` muestra los 12 meses, con perfor
 
 ## Fase 5: MLOps y cierre (`v0.5`)
 
-- [ ] CI completo: ruff + pytest → build de imágenes → `compose up` → 20 solicitudes de muestra → verificación de decisiones y logs.
-- [ ] Job de política: un cambio en `policy/` corre los tests de reglas y publica el diff de impacto en el PR.
-- [ ] Promoción de modelos: candidato contra vigente sobre el mismo OOT, con umbrales escritos.
-- [ ] README final: frase, diagrama, GIF de 20 s, quickstart, resultados con contexto de negocio, links a `docs/`.
-- [ ] ADRs restantes: scorecard y no solo GBM, por qué GoRules, por qué PostgreSQL.
-- [ ] Opcional: despliegue de la API en capa gratuita.
+- [x] CI completo: ruff + pytest → pipeline sobre datos sintéticos → build de las 3 imágenes → `compose up` → 40 solicitudes de prueba → simulación y job de monitoreo → verificación de logs y tablero.
+- [x] Job de política: un cambio en `policy/` corre los tests de reglas y publica el diff de impacto en el resumen del PR.
+- [x] Ciclo de vida del modelo (`docs/model_lifecycle.md`): `models/registry.json` define el champion; `make recalibrate` y `make promote` comparan candidato contra vigente sobre los mismos préstamos y promueven solo si se cumplen los umbrales escritos; registro de versiones y alias `champion` en MLflow.
+- [x] Primera promoción real: `scorecard-v1.1` (experimento 002), recalibración que pidió el monitoreo. Cumplió los 6 criterios; con el modelo nuevo, el monitoreo pasa de "recalibrar" a "monitorear".
+- [x] README final: frase, GIF de 22 s, resultados con contexto de negocio, diagrama, quickstart y links a `docs/`.
+- [x] ADRs: scorecard y no solo GBM (experimento 001 y ADR-003), GoRules (ADR-005), PostgreSQL (D4 y ADR-005), monitoreo (ADR-006).
+- [ ] Tags `v0.0` … `v0.5`: pendientes de confirmación.
+- [ ] Opcional: despliegue de la API en capa gratuita. No se hizo.
 
 Hecho cuando: un tercero clona, corre `make data && docker compose up` y ve una decisión en el tablero sin leer más que el README.
 

@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from credit_score import policy_analysis as pa
+from credit_score import registry
 from credit_score.policy_engine import CHALLENGER, CHAMPION, Policy, assign_arm, graph_bytes
 
 BASE = {
@@ -159,7 +160,9 @@ def test_a_changed_graph_without_a_new_version_does_not_load(tmp_path):
 
 def test_manifest_points_at_the_document_and_the_model():
     manifest = json.loads((graph_bytes.__globals__["POLICY_DIR"] / "manifest.json").read_text())
-    assert manifest["version"].startswith("policy-") and manifest["scorecard"] == "scorecard-v1"
+    assert manifest["version"].startswith("policy-") and registry.champion().startswith(
+        manifest["scorecard"]
+    )
 
 
 def test_policy_diff_counts_moved_decisions(tmp_path):

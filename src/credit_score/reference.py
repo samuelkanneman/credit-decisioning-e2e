@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from credit_score import metrics, scorecard, scoring
+from credit_score import metrics, registry, scorecard, scoring
 from credit_score.bounds import DERIVED
 from credit_score.config import TARGET
 from credit_score.policy_analysis import decision_rules
@@ -81,8 +81,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=Path("data/processed"))
     parser.add_argument("--models", type=Path, default=Path("models"))
+    parser.add_argument("--model", help="model version (default: the champion)")
     args = parser.parse_args()
-    card_dir = args.models / "scorecard-v1"
+    card_dir = args.models / (args.model or registry.champion(args.models))
     card = json.loads((card_dir / "card.json").read_text())
     df = pd.read_parquet(args.data / "modeling.parquet")
     reference = build(df[df["split"] == "dev"], card, load_manifest()["version"])

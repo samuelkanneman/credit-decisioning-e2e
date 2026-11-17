@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from credit_score import scoring
+from credit_score import registry, scoring
 from credit_score.bounds import DERIVED
 from credit_score.config import TARGET
 from credit_score.target import MONTHS_TO_90DPD, charged_off, months_between
@@ -174,7 +174,7 @@ def main() -> None:
     parser.add_argument("--keep", action="store_true", help="do not clear earlier runs")
     args = parser.parse_args()
 
-    card = json.loads((args.models / "scorecard-v1" / "card.json").read_text())
+    card = json.loads((registry.champion_dir(args.models) / "card.json").read_text())
     df = load_applications(
         pd.read_parquet(args.data / "modeling.parquet"), card, args.fraction, args.drift
     )

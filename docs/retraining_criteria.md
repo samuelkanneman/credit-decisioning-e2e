@@ -24,6 +24,7 @@ Performance is measured on **booked** loans because in production a rejected app
 | Stability | PSI of a scorecard variable against development | > 0.10 · > 0.25 | watch · investigate |
 | Performance | KS on booked loans below development | > 3 pp · > 5 pp | investigate · alert |
 | Performance | Observed / predicted bad rate on booked loans | outside 0.80–1.25 | alert |
+| Performance | Observed / predicted by band, matured cohorts pooled | outside 0.80–1.25 | investigate |
 | Policy | Approval rate against development | > 10 pp | investigate |
 | Policy | Approval rate change in one month | > 5 pp | investigate |
 | Policy | Firing rate of a knock-out or review rule, month on month | > 50% relative, from a base of 1% or more | investigate |
@@ -44,7 +45,9 @@ Before calling any change model decay, check what the harness profile asks for: 
 
 ## What the simulation showed
 
-**2017 as it happened** ([report](monitoring_report.md)): recommendation **recalibrate**. Booked 2017 loans went bad 1.27 times as often as the model predicted, consistently across six matured months, while the score distribution stayed close to development (PSI below 0.05 every month) and KS held. The same gap appeared out of time in experiment 001. No false alarm from the policy indicators.
+**2017 as it happened** ([report](monitoring_report.md)): recommendation **recalibrate**. Booked 2017 loans went bad 1.27 times as often as the model predicted, consistently across six matured months, while the score distribution stayed close to development (PSI below 0.05 every month) and KS stayed within 5 pp of development (one month, June, 4.6 pp below). The same gap appeared out of time in experiment 001. No false alarm from the policy indicators.
+
+**After recalibration** ([report](monitoring_report_v1.1.md)): the same replay served by `scorecard-v1.1` ([experiment 002](experiments/002-recalibration.md)) gives **monitor**. The monthly calibration alerts are gone. What remains: variable PSI watches and the single June KS month, which do not depend on the PD mapping, and band C over-predicted on booked loans (0.78 on 46 bads), because the new mapping was fitted on every 2016 loan rather than on the loans this policy books. Worth refitting on booked loans once enough of them have matured.
 
 **2017 with a riskier channel from July** ([report](monitoring_report_drift.md)): a broker channel adds 40% to each month's volume with applicants scoring below 690 on the bureau and with six or more accounts opened in two years. In July:
 

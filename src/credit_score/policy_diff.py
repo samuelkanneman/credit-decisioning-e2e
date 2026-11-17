@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from credit_score import registry
 from credit_score.policy_engine import CHALLENGER, CHAMPION, INPUTS, POLICY_DIR, Policy
 
 SAMPLE = 20_000
@@ -41,7 +42,7 @@ def sample(data: Path, models: Path) -> tuple[pd.DataFrame, str]:
 
         from credit_score import scorecard
 
-        card = json.loads((models / "scorecard-v1" / "card.json").read_text())
+        card = json.loads((registry.champion_dir(models) / "card.json").read_text())
         df = pd.read_parquet(path)
         df = df[df["split"] == "oot"].sample(SAMPLE, random_state=SEED)
         df["score"] = scorecard.score(df, card)

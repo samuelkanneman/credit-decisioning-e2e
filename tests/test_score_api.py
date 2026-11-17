@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -8,11 +7,11 @@ from fastapi.testclient import TestClient
 from score_api.app import create_app
 from score_api.store import RequestLog
 
-from credit_score import scorecard, scoring
+from credit_score import registry, scorecard, scoring
 from credit_score.bounds import CATEGORICAL, DERIVED, NUMERIC
 from credit_score.features import build_features
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / "models" / "scorecard-v1"
+MODEL_DIR = registry.champion_dir()
 CARD = json.loads((MODEL_DIR / "card.json").read_text())
 INPUTS = scoring.required_inputs(CARD, DERIVED)
 

@@ -2,12 +2,13 @@
 /data/
 /mlruns/
 /models/*
-# the exported scorecard is small, aggregate and what the scoring API serves
-!/models/scorecard-v1/
-/models/scorecard-v1/*
-!/models/scorecard-v1/card.json
-!/models/scorecard-v1/metadata.json
-!/models/scorecard-v1/reference.json
+# the served models are small, aggregate and what the services load
+!/models/registry.json
+!/models/scorecard-v*/
+/models/scorecard-v*/*
+!/models/scorecard-v*/card.json
+!/models/scorecard-v*/metadata.json
+!/models/scorecard-v*/reference.json
 /build/
 *.parquet
 *.csv
