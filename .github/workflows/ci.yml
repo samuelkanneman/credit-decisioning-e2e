@@ -28,6 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
       - name: Build images and start the stack
         run: make up
       - name: Smoke test
@@ -38,6 +42,16 @@ jobs:
           test "$(q 'select count(*) from score_log')" -eq 40
           test "$(q 'select count(*) from decision_log')" -eq 20
           test "$(q "select count(distinct decision) from decision_log")" -eq 3
+      - name: Replay synthetic 2017 traffic and run the monitoring job
+        run: |
+          make demo
+          make simulate PROCESSED=build/demo/processed FRACTION=0.2
+          make monitor PROCESSED=build/demo/processed REPORT=build/monitoring_report.md
+          test "$(docker compose exec -T postgres psql -U credit -d credit -tAc \
+            "select count(*) from loan_outcomes")" -gt 100
+          cat build/monitoring_report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Dashboard is up
+        run: curl -fsS http://127.0.0.1:8501/_stcore/health
       - if: failure()
         run: docker compose logs
       - if: always()

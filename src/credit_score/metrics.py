@@ -10,7 +10,6 @@ credit quality. ``bad`` is 1 for a bad loan.
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
 
 PSI_FLOOR = 1e-6
 KS_JITTER = 0.01  # in score points
@@ -29,7 +28,12 @@ def _evaluable(bad, score) -> tuple[np.ndarray, np.ndarray]:
 def auc(bad, score) -> float:
     """AUC as a fraction in [0, 1]; a higher score must mean lower risk."""
     bad, score = _evaluable(bad, score)
-    return float(roc_auc_score(bad, -score))
+    # Mann-Whitney form, ties at average rank: identical to sklearn's roc_auc_score
+    # without needing it at runtime.
+    ranks = pd.Series(-score).rank(method="average").to_numpy()
+    n_bad = bad.sum()
+    n_good = len(bad) - n_bad
+    return float((ranks[bad == 1].sum() - n_bad * (n_bad + 1) / 2) / (n_bad * n_good))
 
 
 def gini(bad, score) -> float:
@@ -106,5 +110,21 @@ def psi_numeric(reference, new) -> float:
     edges[0], edges[-1] = -np.inf, np.inf
     e = np.histogram(reference, edges)[0] / len(reference)
     a = np.histogram(new, edges)[0] / len(new)
+    e, a = np.clip(e, PSI_FLOOR, None), np.clip(a, PSI_FLOOR, None)
+    return float(((a - e) * np.log(a / e)).sum())
+
+
+def psi_from_shares(reference: dict | list, new: dict | list) -> float:
+    """PSI from two sets of shares over the same bins (dicts keyed by bin, or aligned lists).
+
+    A bin present on one side only counts as an empty bin on the other.
+    """
+    if isinstance(reference, dict) or isinstance(new, dict):
+        e = pd.Series(reference, dtype=float)
+        a = pd.Series(new, dtype=float)
+        e, a = e.align(a, fill_value=0.0)
+        e, a = e.to_numpy(), a.to_numpy()
+    else:
+        e, a = np.asarray(reference, dtype=float), np.asarray(new, dtype=float)
     e, a = np.clip(e, PSI_FLOOR, None), np.clip(a, PSI_FLOOR, None)
     return float(((a - e) * np.log(a / e)).sum())

@@ -7,6 +7,7 @@
 /models/scorecard-v1/*
 !/models/scorecard-v1/card.json
 !/models/scorecard-v1/metadata.json
+!/models/scorecard-v1/reference.json
 /build/
 *.parquet
 *.csv

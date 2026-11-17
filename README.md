@@ -6,7 +6,7 @@ End-to-end credit decisioning system: scorecard → scoring API → rules engine
 
 The point of this repository is the engineering and the credit policy around a model, not the model's AUC: how a score is built to risk standards, served, wrapped in a policy that is versioned as code, and monitored once it is making decisions.
 
-> **Status: work in progress.** The score, the scoring API and the credit policy (Phases 1 to 3) are done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
+> **Status: work in progress.** Phases 1 to 4 are done: score, scoring API, credit policy and monitoring. Phase 5 are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
 
 ## Architecture
 
@@ -41,7 +41,11 @@ A 15-variable scorecard trained on 2013–2015 loans and validated on loans issu
 - The ranking holds out of time but the PD does not: the model predicts 3.0% where 4.0% defaulted. The population did not change (score PSI 0.003); the level of risk did. That gap is what the monitoring phase is built to catch.
 - The policy built on that score approves 48.6% of applicants at a 2.8% margin on matured loans, against 1.8% for a bureau-score ranking that approves as many; every cut-off is justified by the loans just above and below it, under a stress case of 34% more defaults.
 
-Details: [model card](docs/model_card.md) · [validation report](docs/validation_report.md).
+- Replaying 2017 through the stack, monitoring recommends **recalibrating, not retraining**: booked loans went bad 1.27 times as often as predicted while the score distribution barely moved. With a riskier channel injected from July, approval fell 10 points in a month and a knock-out fired 58% more often, yet score PSI against development *fell*: the new applicants pulled the distribution back towards development. A fixed-reference PSI alone would have missed it, and the broker loans the policy still approved went bad at 3.4% against 1.8% for direct ones.
+
+Details: [model card](docs/model_card.md) · [validation report](docs/validation_report.md). · [monitoring](docs/retraining_criteria.md)
+
+![Monitoring dashboard: score PSI against development and against the previous three months, with the July drift](docs/images/dashboard-stability.png)
 
 ## Roadmap
 
@@ -51,7 +55,7 @@ Details: [model card](docs/model_card.md) · [validation report](docs/validation
 | 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
 | 2. Scoring API | Containerised `/score` with reason codes | Done |
 | 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Done |
-| 4. Monitoring | Production traffic simulator and dashboard | Planned |
+| 4. Monitoring | Production traffic simulator and dashboard | Done |
 | 5. MLOps | End-to-end CI with `docker compose` | Planned |
 
 ## Quickstart
@@ -61,7 +65,7 @@ Details: [model card](docs/model_card.md) · [validation report](docs/validation
 Requires Docker. The trained scorecard and the policy are in the repository, so no data is needed.
 
 ```bash
-make up       # PostgreSQL, scoring API (:8000/docs), decision service (:8001/docs)
+make up       # PostgreSQL, scoring API (:8000/docs), decision service (:8001/docs), dashboard (:8501)
 make smoke    # checks both services end to end
 ```
 
@@ -91,6 +95,19 @@ curl -s localhost:8001/decide -H 'Content-Type: application/json' -d '{
 A rejection lists the policy rule first and then, when the score drove it, the variables that cost the applicant the most points. Every decision is written to PostgreSQL before the answer is returned, with the model version, the policy version and hash, and the champion or challenger arm.
 
 The scoring API on its own (`POST :8000/score`) returns score, PD, band and reason codes; a value outside the ranges the model was trained on is a 422, never a score. Measured on the stack with 3,000 real 2017 applications: scores identical to training, decisions identical to the offline policy, 9.4 ms at p95 for a full decision.
+
+### Replay 2017 and monitor it
+
+Requires the real data (`make data`, below) and the running stack.
+
+```bash
+make simulate              # 10% of 2017, month by month, through the decision service
+make simulate DRIFT=broker # the same, with a riskier channel from July 2017
+make monitor               # docs/monitoring_report.md: alerts and recommendation as of 2019-03
+make evidently             # monthly Evidently drift reports (HTML) in build/monitoring/evidently
+```
+
+The dashboard at `http://localhost:8501` reads the decision log and lets you move the "as of" month: inputs update as applications arrive, performance appears only once a cohort has matured, and only for booked loans.
 
 ### Rebuild the model
 
@@ -129,6 +146,8 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 - [ADR-004: Profitability, loss given default and the stress case](docs/adr/004-profitability-and-lgd.md)
 - [Credit policy](docs/policy.md) and the [analysis](docs/policy_analysis.md) behind every cut-off
 - [ADR-005: Rules engine and decision service](docs/adr/005-rules-engine.md)
+- [ADR-006: Monitoring design](docs/adr/006-monitoring.md) and the [thresholds and retraining criteria](docs/retraining_criteria.md)
+- Monitoring reports: [2017 as it happened](docs/monitoring_report.md), [with an injected channel](docs/monitoring_report_drift.md)
 - [Binning and variable selection](docs/binning.md)
 - [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

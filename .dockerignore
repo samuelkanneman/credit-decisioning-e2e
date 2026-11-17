@@ -8,3 +8,4 @@
 **/__pycache__
 !policy/manifest.json
 !policy/credit-policy.json
+!models/scorecard-v1/reference.json

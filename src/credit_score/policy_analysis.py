@@ -207,17 +207,34 @@ PROPOSED = {
 }
 
 
+RULE_DECISION = {
+    "K1": "REJECT",
+    "K2": "REJECT",
+    "S1": "REJECT",
+    "S2": "REVIEW",
+    "R1": "REVIEW",
+    "R2": "REVIEW",
+    "S3": "APPROVE",
+}
+
+
+def decision_rules(df: pd.DataFrame, policy: dict = PROPOSED, arm: str = "champion"):
+    """The rule that decides each application, first hit in the graph's order."""
+    approve_from = policy["approve_from" if arm == "champion" else "challenger_approve_from"]
+    rule = pd.Series("S3", index=df.index)
+    # Assigned from the last rule to the first, so the earliest matching rule wins.
+    rule[df["annual_inc"].isna()] = "R2"
+    rule[df["emp_length"].isna()] = "R1"
+    rule[df["score"] < approve_from] = "S2"
+    rule[df["score"] < policy["reject_below"]] = "S1"
+    rule[df["acc_open_past_24mths"] > policy["max_accounts_opened_24m"]] = "K2"
+    rule[df["fico"] < policy["min_fico"]] = "K1"
+    return rule
+
+
 def apply_policy(df: pd.DataFrame, policy: dict = PROPOSED, arm: str = "champion") -> pd.Series:
     """Decision per loan: knock-outs first, then the score cut-offs, then review reasons."""
-    approve_from = policy["approve_from" if arm == "champion" else "challenger_approve_from"]
-    decision = pd.Series("REVIEW", index=df.index)
-    decision[df["score"] >= approve_from] = "APPROVE"
-    incomplete = df["emp_length"].isna() | df["annual_inc"].isna()
-    decision[incomplete & (decision == "APPROVE")] = "REVIEW"
-    decision[df["score"] < policy["reject_below"]] = "REJECT"
-    decision[df["acc_open_past_24mths"] > policy["max_accounts_opened_24m"]] = "REJECT"
-    decision[df["fico"] < policy["min_fico"]] = "REJECT"
-    return decision
+    return decision_rules(df, policy, arm).map(RULE_DECISION)
 
 
 def max_loan_to_income(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.Series:

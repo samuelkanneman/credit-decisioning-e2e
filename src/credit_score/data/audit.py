@@ -52,7 +52,7 @@ def to_markdown(table: pd.DataFrame, decimals: int = 2) -> str:
             return f"{int(v):,}"
         return f"{v:,.{decimals}f}"
 
-    header = [table.index.name, *table.columns]
+    header = [str(table.index.name), *map(str, table.columns)]
     lines = ["| " + " | ".join(header) + " |", "|" + " --- |" * len(header)]
     for idx, row in table.iterrows():
         lines.append("| " + " | ".join([str(idx), *(fmt(v) for v in row.tolist())]) + " |")

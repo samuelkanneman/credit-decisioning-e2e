@@ -113,14 +113,16 @@ Hecho cuando: una solicitud devuelve APROBAR / REVISAR / RECHAZAR con límite, m
 
 ## Fase 4: monitoreo (`v0.4`)
 
-- [ ] Simulador: envía mes a mes las solicitudes del período de producción al `decision_service`; revela resultados con el rezago de la ventana de performance.
-- [ ] Opción de inyectar drift (cambio de mix) para mostrar una alerta real.
-- [ ] Jobs mensuales: PSI del score y por variable, KS/AUC sobre cohortes maduras, observado contra esperado por banda.
-- [ ] Tablero Streamlit: Estabilidad, Performance, Política y operación.
-- [ ] Alertas con umbrales escritos (PSI 0,10 / 0,25; caída de KS > 5 pp; cambio > 50% en disparo de una regla).
-- [ ] Reporte mensual de Evidently en HTML como artefacto.
-- [ ] Vista de vintages de los aprobados.
-- [ ] `docs/retraining_criteria.md`: qué combinación de alertas dispara recalibrar y cuál reentrenar.
+- [x] Simulador (`make simulate`): envía mes a mes las solicitudes de 2017 al `decision_service` y registra el resultado real de cada préstamo con la fecha desde la que se conoce (14 meses después de la emisión).
+- [x] Drift inyectado (`DRIFT=broker`): desde julio de 2017, un canal con solicitantes más riesgosos suma 40% al volumen.
+- [x] Job de monitoreo (`make monitor`): PSI del score (contra desarrollo y contra los 3 meses previos) y por variable, KS/AUC y observado contra esperado sobre préstamos aprobados de cohortes maduras.
+- [x] Tablero Streamlit con selector de mes: Estabilidad, Performance, Política y operación, Vintages, Alertas.
+- [x] Alertas con umbrales escritos en `docs/retraining_criteria.md`.
+- [x] Reportes mensuales de Evidently en HTML (`make evidently`), en un entorno propio porque Evidently 0.7 no corre con pandas 3.
+- [x] Vista de vintages de los aprobados.
+- [x] `docs/retraining_criteria.md`: qué combinación de alertas dispara recalibrar y cuál reentrenar.
+
+Verificado el 17-nov-2026 con el 10% de 2017 (40.116 solicitudes; 48.522 con drift): recomendación "recalibrar" en ambos casos. Sin drift, ninguna alerta de política. Con drift, julio dispara la caída de aprobación (−9,8 pp), la regla K2 (+58%) y el PSI contra los meses previos (0,077), mientras el PSI contra desarrollo baja.
 
 Hecho cuando: `make simulate && make dashboard` muestra los 12 meses, con performance visible solo para los meses maduros.
 

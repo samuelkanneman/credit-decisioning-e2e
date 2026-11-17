@@ -124,11 +124,13 @@ def test_graph_matches_the_analysis_that_justifies_it(policy):
     )
     for arm in (CHAMPION, CHALLENGER):
         expected = pa.apply_policy(df, arm=arm)
+        rules = pa.decision_rules(df, arm=arm)
         share = pa.max_loan_to_income(df).where(expected != "REJECT")
         for i, row in enumerate(df.itertuples(index=False)):
             context = {k: (None if pd.isna(v) else v) for k, v in row._asdict().items()}
             out = policy.evaluate(context | {"arm": arm})
             assert out["decision"] == expected.iloc[i], (arm, context)
+            assert out["decision_rule"] == rules.iloc[i], (arm, context)
             want = share.iloc[i]
             assert out["max_loan_to_income"] == (None if pd.isna(want) else pytest.approx(want))
 

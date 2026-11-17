@@ -44,6 +44,18 @@ def derive(application: dict) -> dict:
     return out
 
 
+def bin_label(value, spec: dict) -> str:
+    """Name of the bin a value falls into: the unit for per-variable stability."""
+    if is_missing(value):
+        return "missing"
+    if spec["type"] == "categorical":
+        for position, group in enumerate(spec["categories"]):
+            if value in group:
+                return f"bin {position}"
+        return "other"
+    return f"bin {bisect_right(spec['splits'], value)}"
+
+
 def variable_points(value, spec: dict) -> int:
     if is_missing(value):
         return spec["missing_points"]

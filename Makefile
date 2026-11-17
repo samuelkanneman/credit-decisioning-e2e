@@ -1,4 +1,4 @@
-.PHONY: setup data demo dataset binning train policy-analysis policy-diff audit lint test up down smoke loadtest
+.PHONY: setup data demo dataset binning train reference policy-analysis policy-diff simulate monitor evidently audit lint test up down smoke loadtest
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -28,6 +28,10 @@ train:
 	uv run python -m credit_score.train --data $(PROCESSED) --models $(MODELS) \
 		--report $(DOCS)/validation_report.md $(TRAIN_ARGS)
 
+## Development distributions and metrics monitoring compares against (models/scorecard-v1/reference.json)
+reference:
+	uv run python -m credit_score.reference --data $(PROCESSED) --models $(MODELS)
+
 ## Cut-off curve, swap-set, knock-outs, limits and reject inference
 policy-analysis:
 	uv run python -m credit_score.policy_analysis --data $(PROCESSED) --models $(MODELS) \
@@ -50,7 +54,7 @@ demo:
 	$(MAKE) dataset binning train PROCESSED=$(DEMO)/processed MODELS=$(DEMO)/models \
 		DOCS=$(DEMO)/docs TRAIN_ARGS=--no-mlflow
 
-## Start PostgreSQL, the scoring API (:8000/docs) and the decision service (:8001/docs)
+## Start PostgreSQL, scoring API (:8000/docs), decision service (:8001/docs), dashboard (:8501)
 up:
 	docker compose up -d --build --wait
 
@@ -66,6 +70,21 @@ smoke:
 loadtest:
 	uv run --group load locust -f services/score_api/loadtest/locustfile.py \
 		--host http://127.0.0.1:8000 --headless -u 20 -r 20 -t 25s --only-summary
+
+## Replay 2017 through the running stack. FRACTION of each month (default 0.1); DRIFT=broker
+## adds a riskier channel from July 2017.
+simulate:
+	uv run python -m credit_score.simulation --data $(PROCESSED) --fraction $(or $(FRACTION),0.1) \
+		$(if $(DRIFT),--drift $(DRIFT))
+
+## Monitoring report as of AS_OF (default 2019-03) from the decision log; frames to build/monitoring/latest
+monitor:
+	uv run python -m credit_score.monitoring --as-of $(or $(AS_OF),2019-03) --data $(PROCESSED) \
+		--export-dir build/monitoring/latest --report $(or $(REPORT),$(DOCS)/monitoring_report.md)
+
+## Monthly Evidently data-drift reports (HTML) for the last `make monitor` run
+evidently:
+	uv run --script monitoring/evidently_report.py build/monitoring/latest build/monitoring/evidently
 
 lint:
 	uv run ruff check .

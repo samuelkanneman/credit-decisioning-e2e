@@ -39,3 +39,15 @@ services:
         condition: service_healthy
       score-api:
         condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: services/dashboard/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://credit:credit@postgres:5432/credit
+    ports:
+      - "8501:8501"
+    depends_on:
+      postgres:
+        condition: service_healthy

@@ -64,3 +64,12 @@ def test_psi_discrete_matches_formula():
     shifted = pd.Series(["a"] * 80 + ["b"] * 20)
     expected = (0.8 - 0.5) * np.log(0.8 / 0.5) + (0.2 - 0.5) * np.log(0.2 / 0.5)
     assert metrics.psi(base, shifted) == pytest.approx(expected)
+
+
+def test_auc_matches_sklearn_including_ties():
+    from sklearn.metrics import roc_auc_score
+
+    bad, score = _sample(5000, seed=4)
+    rounded = (score / 10).round()  # heavy ties
+    assert metrics.auc(bad, score) == pytest.approx(roc_auc_score(bad, -score), abs=1e-12)
+    assert metrics.auc(bad, rounded) == pytest.approx(roc_auc_score(bad, -rounded), abs=1e-12)
