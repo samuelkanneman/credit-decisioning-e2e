@@ -5,6 +5,8 @@ is streamed in batches so it never has to fit in memory.
 """
 
 import argparse
+import json
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -20,7 +22,7 @@ REJECTED_GLOB = "rejected*.csv*"
 
 def _to_number(s: pd.Series) -> pd.Series:
     """Parse numbers that may come as ' 36 months', '13.5%' or plain text."""
-    cleaned = s.astype("string").str.replace(r"[%,]|months", "", regex=True).str.strip()
+    cleaned = s.astype("string").str.replace(r"%|months", "", regex=True).str.strip()
     return pd.to_numeric(cleaned, errors="coerce")
 
 
@@ -36,7 +38,14 @@ def _emp_length_years(s: pd.Series) -> pd.Series:
     return years.mask(s.str.startswith("<", na=False), 0)
 
 
-def clean_accepted(df: pd.DataFrame) -> pd.DataFrame:
+def _count_coerced(raw: pd.Series, parsed: pd.Series, keep: pd.Series, coerced: Counter, name):
+    """Count kept rows where a non-empty raw value could not be parsed and became missing."""
+    text = raw.astype("string").str.strip()
+    had_value = text.notna() & ~text.isin(["", "n/a"])
+    coerced[name] += int((had_value & parsed.isna() & keep).sum())
+
+
+def clean_accepted(df: pd.DataFrame, coerced: Counter | None = None) -> pd.DataFrame:
     out = pd.DataFrame(index=df.index)
     for col in ACCEPTED_COLUMNS:
         raw = df[col.name]
@@ -49,10 +58,15 @@ def clean_accepted(df: pd.DataFrame) -> pd.DataFrame:
         else:
             out[col.name] = raw.astype("string").str.strip()
     # The raw file ends with footer rows that are not loans.
-    return out[out["loan_amnt"].notna() & out["issue_d"].notna()].reset_index(drop=True)
+    keep = out["loan_amnt"].notna() & out["issue_d"].notna()
+    if coerced is not None:
+        for col in ACCEPTED_COLUMNS:
+            if col.kind != "cat":
+                _count_coerced(df[col.name], out[col.name], keep, coerced, col.name)
+    return out[keep].reset_index(drop=True)
 
 
-def clean_rejected(df: pd.DataFrame) -> pd.DataFrame:
+def clean_rejected(df: pd.DataFrame, coerced: Counter | None = None) -> pd.DataFrame:
     df = df.rename(columns=REJECTED_RENAME)[list(REJECTED_RENAME.values())]
     out = pd.DataFrame(index=df.index)
     out["application_d"] = pd.to_datetime(df["application_d"], errors="coerce")
@@ -61,10 +75,15 @@ def clean_rejected(df: pd.DataFrame) -> pd.DataFrame:
     out["emp_length"] = _emp_length_years(df["emp_length"])
     for name in ("purpose", "addr_state"):
         out[name] = df[name].astype("string").str.strip()
-    return out[out["application_d"].notna()].reset_index(drop=True)
+    keep = out["application_d"].notna()
+    if coerced is not None:
+        for name in ("loan_amnt", "risk_score", "dti", "policy_code", "emp_length"):
+            _count_coerced(df[name], out[name], keep, coerced, name)
+        coerced["application_d"] += int((~keep).sum())
+    return out[keep].reset_index(drop=True)
 
 
-def _convert(src: Path, dst: Path, columns: list[str], clean) -> int:
+def _convert(src: Path, dst: Path, columns: list[str], clean) -> dict:
     reader = pacsv.open_csv(
         src,
         read_options=pacsv.ReadOptions(block_size=64 << 20),
@@ -73,18 +92,24 @@ def _convert(src: Path, dst: Path, columns: list[str], clean) -> int:
             column_types={c: pa.string() for c in columns},
         ),
     )
-    writer, rows = None, 0
+    writer, rows_in, rows_out, coerced = None, 0, 0, Counter()
     try:
         for batch in reader:
-            table = pa.Table.from_pandas(clean(batch.to_pandas()), preserve_index=False)
+            rows_in += batch.num_rows
+            table = pa.Table.from_pandas(clean(batch.to_pandas(), coerced), preserve_index=False)
             if writer is None:
                 writer = pq.ParquetWriter(dst, table.schema)
             writer.write_table(table.cast(writer.schema))
-            rows += table.num_rows
+            rows_out += table.num_rows
     finally:
         if writer is not None:
             writer.close()
-    return rows
+    return {
+        "rows_read": rows_in,
+        "rows_written": rows_out,
+        "rows_dropped": rows_in - rows_out,
+        "values_coerced_to_missing": {k: v for k, v in sorted(coerced.items()) if v},
+    }
 
 
 def _find(raw: Path, pattern: str) -> Path:
@@ -94,9 +119,14 @@ def _find(raw: Path, pattern: str) -> Path:
     return matches[0]
 
 
-def prepare(raw: Path, out: Path) -> dict[str, int]:
+def prepare(raw: Path, out: Path) -> dict[str, dict]:
+    """Convert both files and write ``prepare_report.json`` next to the parquet files.
+
+    The report counts what the conversion lost: rows dropped and values that
+    were present in the raw file but could not be parsed.
+    """
     out.mkdir(parents=True, exist_ok=True)
-    return {
+    report = {
         "accepted": _convert(
             _find(raw, ACCEPTED_GLOB),
             out / "accepted.parquet",
@@ -110,6 +140,8 @@ def prepare(raw: Path, out: Path) -> dict[str, int]:
             clean_rejected,
         ),
     }
+    (out / "prepare_report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 def main() -> None:
@@ -117,8 +149,12 @@ def main() -> None:
     parser.add_argument("--raw", type=Path, default=Path("data/raw"))
     parser.add_argument("--out", type=Path, default=Path("data/processed"))
     args = parser.parse_args()
-    for name, rows in prepare(args.raw, args.out).items():
-        print(f"{name}: {rows:,} rows -> {args.out / (name + '.parquet')}")
+    for name, info in prepare(args.raw, args.out).items():
+        print(
+            f"{name}: {info['rows_written']:,} rows -> {args.out / (name + '.parquet')} "
+            f"({info['rows_dropped']:,} dropped, "
+            f"coerced to missing: {info['values_coerced_to_missing'] or 'none'})"
+        )
 
 
 if __name__ == "__main__":

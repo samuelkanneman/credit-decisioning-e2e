@@ -58,9 +58,14 @@ make binning  # monotonic WoE bins, IV, stability, variable selection
 
 Data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic sample is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
 
+## How it is built
+
+The project follows [data-science-harness](https://github.com/samuelkanneman/data-science-harness), my method for doing data science with coding agents: an explicit data contract, fit / selection / evaluation kept apart, experiments preregistered before they run, and metrics with one canonical definition. The rules that apply here are in [`AGENTS.md`](AGENTS.md).
+
 ## Design decisions
 
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
 - [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
 - [Binning and variable selection](docs/binning.md)
+- [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

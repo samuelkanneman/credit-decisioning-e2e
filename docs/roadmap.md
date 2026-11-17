@@ -72,6 +72,7 @@ Hecho cuando: un clon limpio corre `make data && make test` sin intervención y 
 | 3 | Logística sobre WoE, escalado a puntos (600 = 50:1, PDO 20), calibración a PD, bandas de riesgo | Tabla de puntos exportada, artefacto del modelo |
 | 4 | Challenger LightGBM + SHAP; validación OOT (KS, AUC/Gini, lift, PSI, tasa de malos por banda); model card | Reporte de validación, `docs/model_card.md` |
 
+- El experimento se preregistra antes de entrenar (`docs/experiments/001-scorecard.md`), siguiendo data-science-harness.
 - Todo el entrenamiento es un comando (`make train`), con semilla fija y hash de datos registrados en MLflow.
 - Signos de los coeficientes verificados (todos del mismo signo sobre WoE) como test automático.
 - Extra recortable: replicar binning y scorecard en KNIME y comparar puntos.

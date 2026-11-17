@@ -26,7 +26,9 @@ def processed(tmp_path_factory):
 
 def test_footer_rows_are_dropped(processed):
     counts, accepted, rejected = processed
-    assert counts == {"accepted": 3000, "rejected": 1000}
+    assert counts["accepted"]["rows_written"] == 3000 and counts["accepted"]["rows_dropped"] == 1
+    assert counts["rejected"]["rows_written"] == 1000
+    assert counts["accepted"]["values_coerced_to_missing"] == {}
     assert len(accepted) == 3000 and len(rejected) == 1000
 
 
@@ -95,3 +97,15 @@ def test_audit_report_builds(processed):
     _, accepted, rejected = processed
     report = audit.build_report(accepted, rejected)
     assert "## Cohorts by issue year" in report and "| 2016 |" in report
+
+
+def test_unparseable_values_are_counted():
+    from collections import Counter
+
+    raw = synthetic.accepted(5).astype("string")
+    raw.loc[0, "dti"] = "18,5"  # decimal comma: unparseable under this file's contract
+    raw.loc[1, "emp_length"] = "n/a"  # declared sentinel, not a parsing loss
+    coerced = Counter()
+    out = prepare.clean_accepted(raw, coerced)
+    assert pd.isna(out.loc[0, "dti"]) and pd.isna(out.loc[1, "emp_length"])
+    assert {k: v for k, v in coerced.items() if v} == {"dti": 1}
