@@ -99,13 +99,15 @@ Hecho cuando: paridad exacta entre el score offline y el de la API sobre 1.000 c
 | --- | --- | --- |
 | 1 ✅ | Curva de corte: aprobación, tasa de malos y rentabilidad esperada por punto de corte; LGD supuesto | Notebook + ADR del LGD |
 | 2 ✅ | Swap-set contra política por `grade`; inferencia de rechazados (parceling / fuzzy augmentation) con modelo reducido | Notebooks con efecto neto en mora y margen |
-| 3 | Matriz de límites (banda × DTI/ingreso); grafo de decisión en GoRules JDM: knockouts → corte por banda → límite | `policy/*.json` + tests por regla |
-| 4 | `decision_service`: llama al score, evalúa el grafo, champion–challenger por hash del ID, traza completa en logs | Servicio en compose, `docs/policy.md` |
+| 3 ✅ | Matriz de límites (banda × DTI/ingreso); grafo de decisión en GoRules JDM: knockouts → corte por banda → límite | `policy/*.json` + tests por regla |
+| 4 ✅ | `decision_service`: llama al score, evalúa el grafo, champion–challenger por hash del ID, traza completa en logs | Servicio en compose, `docs/policy.md` |
 
 - El análisis es un reporte generado (`make policy-analysis` → `docs/policy_analysis.md`) en lugar de notebooks, como el resto del repo. La política propuesta está en `docs/policy.md` y los supuestos en el ADR-004.
 - Cada regla tiene dueño, razón, impacto estimado y un test con casos borde.
 - La política lleva versión propia, independiente de la del modelo; ambas quedan en cada decisión registrada.
 - Script de diff de impacto: dadas dos versiones de política y una muestra, cuántas decisiones cambian y hacia dónde.
+
+Verificado el 17-nov-2026: 3.000 solicitudes reales de 2017 pasaron por el stack completo con decisiones idénticas a la política calculada offline; p95 de 9,4 ms por decisión; challenger en 10,5% de los casos.
 
 Hecho cuando: una solicitud devuelve APROBAR / REVISAR / RECHAZAR con límite, motivos y traza, y cada corte del documento de política cita un número de los notebooks.
 

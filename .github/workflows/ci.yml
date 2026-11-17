@@ -17,6 +17,12 @@ jobs:
       - run: make test
       - name: Full pipeline on synthetic data
         run: make demo
+      - name: Impact of policy changes
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          uv run python -m credit_score.policy_diff --base FETCH_HEAD --out policy_impact.md
+          cat policy_impact.md >> "$GITHUB_STEP_SUMMARY"
 
   stack:
     runs-on: ubuntu-latest
@@ -26,10 +32,12 @@ jobs:
         run: make up
       - name: Smoke test
         run: make smoke
-      - name: Requests were logged to PostgreSQL
+      - name: Scores and decisions were logged to PostgreSQL
         run: |
-          rows=$(docker compose exec -T postgres psql -U credit -d credit -tAc "select count(*) from score_log")
-          test "$rows" -eq 20
+          q() { docker compose exec -T postgres psql -U credit -d credit -tAc "$1"; }
+          test "$(q 'select count(*) from score_log')" -eq 40
+          test "$(q 'select count(*) from decision_log')" -eq 20
+          test "$(q "select count(distinct decision) from decision_log")" -eq 3
       - if: failure()
         run: docker compose logs
       - if: always()

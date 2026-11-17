@@ -6,7 +6,7 @@ RUN pip install --no-cache-dir uv
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY src ./src
-COPY services/score_api ./services/score_api
+COPY services ./services
 # Only the API and the pure-Python core of credit_score: no training stack.
 RUN uv sync --locked --no-default-groups --package score-api --no-editable
 

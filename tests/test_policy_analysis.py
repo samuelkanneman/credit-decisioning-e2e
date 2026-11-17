@@ -83,6 +83,7 @@ def test_policy_order_of_precedence():
             "fico": [700, 650, 700, 700, 700, 700, 650],
             "acc_open_past_24mths": [2, 2, 12, 2, 2, 2, 12],
             "emp_length": [5, 5, 5, np.nan, 5, 5, np.nan],
+            "annual_inc": [60_000.0] * 7,
         }
     )
     assert pa.apply_policy(df).tolist() == [

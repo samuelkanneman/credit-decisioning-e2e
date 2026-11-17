@@ -10,6 +10,7 @@ resolution-markers = [
 [manifest]
 members = [
     "credit-score",
+    "decision-service",
     "score-api",
 ]
 
@@ -347,6 +348,7 @@ data = [
     { name = "requests" },
 ]
 dev = [
+    { name = "decision-service" },
     { name = "httpx" },
     { name = "pytest" },
     { name = "ruff" },
@@ -371,6 +373,7 @@ train = [
 [package.metadata.requires-dev]
 data = [{ name = "requests", specifier = ">=2.32" }]
 dev = [
+    { name = "decision-service", editable = "services/decision_service" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.6" },
@@ -484,6 +487,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/14/00/089a185f6737e9eefd4086aa5a6105bbc03c26a2396c12d98aa1aa5760f7/databricks_sdk-0.167.0.tar.gz", hash = "sha256:9ed5576e1e28a94d3e47f302d5e337f3dea47d7b27bd7938b9b5e0e06f27a428", size = 1307450, upload-time = "2026-11-16T04:37:09.267Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/c8/e46ca3eb4410c95110dd2659d1d16165d263c078dc07f0edcdc00b6b275f/databricks_sdk-0.167.0-py3-none-any.whl", hash = "sha256:be69845d5cea026f35aa681ae19bf92ee82212c954a7a6b51055e715a383ad9d", size = 1249565, upload-time = "2026-11-16T04:37:07.373Z" },
+]
+
+[[package]]
+name = "decision-service"
+version = "0.1.0"
+source = { editable = "services/decision_service" }
+dependencies = [
+    { name = "credit-score" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "psycopg", extra = ["binary", "pool"] },
+    { name = "uvicorn" },
+    { name = "zen-engine" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "credit-score", editable = "." },
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2" },
+    { name = "uvicorn", specifier = ">=0.30" },
+    { name = "zen-engine", specifier = ">=0.40" },
 ]
 
 [[package]]
@@ -2280,6 +2306,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/cc/51a7b4abf4ac593b8e7eb3794b28e5a35ae26eed8bc04787628d215af82f/yarl-1.25.1-cp312-cp312-win_amd64.whl", hash = "sha256:7d575b54cb3863ef9bc290ea4b009999d55dc237326131e4853cf33e888fee03", size = 102593, upload-time = "2026-09-15T19:31:33.329Z" },
     { url = "https://files.pythonhosted.org/packages/9d/21/0941a6b93a58b59a1ec75e5333bf06929b671309c43c0cd201c172d9c39f/yarl-1.25.1-cp312-cp312-win_arm64.whl", hash = "sha256:bc3ac7bf569f6b64dad04dd7808c7872dae8a97df657856eac05e9b7e3614a85", size = 97697, upload-time = "2026-09-15T19:31:35.855Z" },
     { url = "https://files.pythonhosted.org/packages/54/22/318c7980066769c6bcd9221ed2248294f5698811da099013098c670565ed/yarl-1.25.1-py3-none-any.whl", hash = "sha256:681c758b0490f9e96b78e5fa8e8dc6e648e9185bb6eaebe73183c33ea0c445f3", size = 63617, upload-time = "2026-09-15T19:34:59.616Z" },
+]
+
+[[package]]
+name = "zen-engine"
+version = "2.1.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/04/0932f1733cc5489f4b1a3a67c2606deb6dec5358e861026631fc2c8ce9fc/zen_engine-2.1.7.tar.gz", hash = "sha256:bd6c41c0ffa9e327b209a677c8703de1e5787490dbe9dea1c8e034f35d30641c", size = 706991, upload-time = "2026-11-10T09:54:09.148Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/98/65/a5b7db32fc214ee43bde78064afbb27cc1b7dabe6d96fa04d11eb8830720/zen_engine-2.1.7-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8ce6635e91f4daaf62558d99a2100e3cf92883776fb614254994650d9fcaea40", size = 10465628, upload-time = "2026-11-10T09:53:57.875Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/14/9d87a351fe74689c783c0e11c75fc48fb61cc26cc2929c7e555934649114/zen_engine-2.1.7-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:559671ab9f5926ce81c07fb5e65daea82b3f74944612c5643be77196cb0cf04e", size = 9618980, upload-time = "2026-11-10T09:54:00.307Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/aa/7fb626f7ded9ac6fe7603fdba191654ec702d69412db72d2fd4f1ea34f01/zen_engine-2.1.7-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:fc7f9bdfbe72afbe80b1f507ecf195f856f50867c2d111240cf6094a0c761931", size = 9927151, upload-time = "2026-11-10T09:54:02.551Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/6c/a24c46e1eaf89c6c19abc622bc798e86d8d01b6bf2ba4183e7d96f11db65/zen_engine-2.1.7-cp38-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d95ac1e22d7ff7eb825ef380da1550bf36c571cf0a22a54f9c449c6e6e817b47", size = 10707450, upload-time = "2026-11-10T09:54:04.967Z" },
+    { url = "https://files.pythonhosted.org/packages/32/6f/c1717ca610ce17dc0271af8d9a125bd199b762b1d68cc7c3c6c707d7a5b0/zen_engine-2.1.7-cp38-abi3-win_amd64.whl", hash = "sha256:5e60f2d79dddc1a02ce601e4c92b72ec1930a8a72f999b0a6e66400de0168faf", size = 11039625, upload-time = "2026-11-10T09:54:07.154Z" },
 ]
 
 [[package]]

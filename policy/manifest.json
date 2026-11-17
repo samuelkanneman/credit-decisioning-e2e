@@ -1,0 +1,13 @@
+{
+  "version": "policy-v1",
+  "status": "proposed",
+  "graph": "credit-policy.json",
+  "sha256": "282d7a5a6019fbac603d0c44cba7e1d72a2fd54304ca397a97bb78c38139d4a0",
+  "champion_challenger": {
+    "challenger_share": 0.1,
+    "assignment": "sha256 of application_id, first 8 hex digits, modulo 100",
+    "challenger": "approves from 590 instead of 595"
+  },
+  "scorecard": "scorecard-v1",
+  "document": "docs/policy.md"
+}

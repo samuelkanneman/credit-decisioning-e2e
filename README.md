@@ -6,7 +6,7 @@ End-to-end credit decisioning system: scorecard → scoring API → rules engine
 
 The point of this repository is the engineering and the credit policy around a model, not the model's AUC: how a score is built to risk standards, served, wrapped in a policy that is versioned as code, and monitored once it is making decisions.
 
-> **Status: work in progress.** The score and the scoring API (Phases 1 and 2) are done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
+> **Status: work in progress.** The score, the scoring API and the credit policy (Phases 1 to 3) are done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
 
 ## Architecture
 
@@ -39,6 +39,7 @@ A 15-variable scorecard trained on 2013–2015 loans and validated on loans issu
 - The bad rate falls from 9.4% in the riskiest decile to 1.0% in the safest, with no inversions, on loans the model never saw.
 - Gradient boosting buys one point of AUC. The scorecard keeps a points table and reason codes for that price.
 - The ranking holds out of time but the PD does not: the model predicts 3.0% where 4.0% defaulted. The population did not change (score PSI 0.003); the level of risk did. That gap is what the monitoring phase is built to catch.
+- The policy built on that score approves 48.6% of applicants at a 2.8% margin on matured loans, against 1.8% for a bureau-score ranking that approves as many; every cut-off is justified by the loans just above and below it, under a stress case of 34% more defaults.
 
 Details: [model card](docs/model_card.md) · [validation report](docs/validation_report.md).
 
@@ -49,44 +50,47 @@ Details: [model card](docs/model_card.md) · [validation report](docs/validation
 | 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
 | 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
 | 2. Scoring API | Containerised `/score` with reason codes | Done |
-| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Analysis done, engine next |
+| 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Done |
 | 4. Monitoring | Production traffic simulator and dashboard | Planned |
 | 5. MLOps | End-to-end CI with `docker compose` | Planned |
 
 ## Quickstart
 
-### Run the scoring API
+### Run the stack
 
-Requires Docker. The trained scorecard is in the repository, so no data is needed.
+Requires Docker. The trained scorecard and the policy are in the repository, so no data is needed.
 
 ```bash
-make up       # PostgreSQL + scoring API, docs at http://localhost:8000/docs
-make smoke    # scores 20 applications and checks the answers
+make up       # PostgreSQL, scoring API (:8000/docs), decision service (:8001/docs)
+make smoke    # checks both services end to end
 ```
 
+Ask for a decision:
+
 ```bash
-curl -s localhost:8000/score -H 'Content-Type: application/json' -d '{
-  "loan_amnt": 20000, "term": 60, "purpose": "debt_consolidation", "annual_inc": 52000,
-  "home_ownership": "RENT", "dti": 27.4, "fico": 675, "acc_open_past_24mths": 7,
-  "inq_last_6mths": 2, "mths_since_recent_inq": 1, "mo_sin_rcnt_tl": 3,
-  "mths_since_recent_bc": 6, "mo_sin_old_rev_tl_op": 95, "bc_open_to_buy": 1200,
-  "tot_hi_cred_lim": 48000}'
+curl -s localhost:8001/decide -H 'Content-Type: application/json' -d '{
+  "application_id": "demo-0002", "loan_amnt": 30000, "term": 36, "purpose": "credit_card",
+  "annual_inc": 60000, "emp_length": 6, "home_ownership": "MORTGAGE", "dti": 12.0,
+  "fico": 735, "acc_open_past_24mths": 2, "inq_last_6mths": 0, "mths_since_recent_inq": null,
+  "mo_sin_rcnt_tl": 18, "mths_since_recent_bc": 30, "mo_sin_old_rev_tl_op": 220,
+  "bc_open_to_buy": 20000, "tot_hi_cred_lim": 250000}'
 ```
 
 ```json
 {
-  "request_id": "0b9c…", "model_version": "scorecard-v1",
-  "score": 537, "pd": 0.150, "band": "E",
-  "reasons": [
-    {"code": "R01", "description": "Too many accounts opened in the last 24 months", "points_lost": 15},
-    {"code": "R02", "description": "Credit bureau score too low", "points_lost": 14},
-    {"code": "R11", "description": "Loan amount too high relative to income", "points_lost": 14},
-    {"code": "R08", "description": "Insufficient available credit on bankcards", "points_lost": 13}
-  ]
+  "application_id": "demo-0002",
+  "decision": "APPROVE", "requested_amount": 30000.0, "approved_amount": 24000.0,
+  "reasons": [{"source": "policy", "code": "L1",
+               "description": "Amount limited to 40% of annual income for this risk band"}],
+  "score": 635, "pd": 0.006, "band": "A", "arm": "champion",
+  "model_version": "scorecard-v1", "policy_version": "policy-v1",
+  "trace": {"knockout": null, "decision_rule": "S3", "limit_rule": "L1", "max_loan_to_income": 0.4}
 }
 ```
 
-Reasons are the variables that cost the applicant the most points against the best bin of each variable. A value outside the ranges the model was trained on is rejected with a 422, never scored. Measured on the container: scores identical to training on 3,000 real loans, p95 of 15 ms at about 500 requests per second.
+A rejection lists the policy rule first and then, when the score drove it, the variables that cost the applicant the most points. Every decision is written to PostgreSQL before the answer is returned, with the model version, the policy version and hash, and the champion or challenger arm.
+
+The scoring API on its own (`POST :8000/score`) returns score, PD, band and reason codes; a value outside the ranges the model was trained on is a 422, never a score. Measured on the stack with 3,000 real 2017 applications: scores identical to training, decisions identical to the offline policy, 9.4 ms at p95 for a full decision.
 
 ### Rebuild the model
 
@@ -107,6 +111,7 @@ make dataset  # population, target, split, features, data contract check
 make binning  # monotonic WoE bins, IV, stability, variable selection
 make train    # scorecard, challenger, out-of-time validation, model export, MLflow
 make policy-analysis  # cut-off curve, swap-set, knock-outs, limits, reject inference
+make policy-diff      # how many decisions a change in policy/ moves
 ```
 
 Loan data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic data is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
@@ -123,6 +128,7 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 - [ADR-003: Scoring runtime and model artifact](docs/adr/003-scoring-runtime.md)
 - [ADR-004: Profitability, loss given default and the stress case](docs/adr/004-profitability-and-lgd.md)
 - [Credit policy](docs/policy.md) and the [analysis](docs/policy_analysis.md) behind every cut-off
+- [ADR-005: Rules engine and decision service](docs/adr/005-rules-engine.md)
 - [Binning and variable selection](docs/binning.md)
 - [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

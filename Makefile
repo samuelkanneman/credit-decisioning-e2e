@@ -1,4 +1,4 @@
-.PHONY: setup data demo dataset binning train policy-analysis audit lint test up down smoke loadtest
+.PHONY: setup data demo dataset binning train policy-analysis policy-diff audit lint test up down smoke loadtest
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -33,6 +33,10 @@ policy-analysis:
 	uv run python -m credit_score.policy_analysis --data $(PROCESSED) --models $(MODELS) \
 		--report $(DOCS)/policy_analysis.md
 
+## How many decisions a policy change moves, against BASE (default origin/main)
+policy-diff:
+	uv run python -m credit_score.policy_diff --base $(or $(BASE),origin/main) --data $(PROCESSED)
+
 ## Regenerate docs/data_audit.md from the processed data
 audit:
 	uv run python -m credit_score.data.audit --data $(PROCESSED) --out $(DOCS)/data_audit.md
@@ -46,7 +50,7 @@ demo:
 	$(MAKE) dataset binning train PROCESSED=$(DEMO)/processed MODELS=$(DEMO)/models \
 		DOCS=$(DEMO)/docs TRAIN_ARGS=--no-mlflow
 
-## Start PostgreSQL and the scoring API (http://localhost:8000/docs)
+## Start PostgreSQL, the scoring API (:8000/docs) and the decision service (:8001/docs)
 up:
 	docker compose up -d --build --wait
 
@@ -56,6 +60,7 @@ down:
 ## Check a running stack end to end
 smoke:
 	python3 services/score_api/smoke_test.py
+	python3 services/decision_service/smoke_test.py
 
 ## 20 concurrent users for 25 seconds against a running stack
 loadtest:

@@ -6,3 +6,5 @@
 !models/scorecard-v1/card.json
 !models/scorecard-v1/metadata.json
 **/__pycache__
+!policy/manifest.json
+!policy/credit-policy.json

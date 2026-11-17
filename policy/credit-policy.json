@@ -1,0 +1,381 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "request",
+      "type": "inputNode",
+      "name": "Application",
+      "position": {
+        "x": 0,
+        "y": 200
+      }
+    },
+    {
+      "id": "knockouts",
+      "type": "decisionTableNode",
+      "name": "Knock-outs",
+      "position": {
+        "x": 250,
+        "y": 200
+      },
+      "content": {
+        "hitPolicy": "first",
+        "passThrough": true,
+        "inputField": null,
+        "outputPath": null,
+        "inputs": [
+          {
+            "id": "ko-fico",
+            "name": "Bureau score",
+            "field": "fico"
+          },
+          {
+            "id": "ko-acc",
+            "name": "Accounts opened in 24 months",
+            "field": "acc_open_past_24mths"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "ko-rule",
+            "name": "Knock-out",
+            "field": "knockout"
+          },
+          {
+            "id": "ko-desc",
+            "name": "Knock-out reason",
+            "field": "knockout_description"
+          }
+        ],
+        "rules": [
+          {
+            "_id": "knockouts-1",
+            "ko-fico": "< 660",
+            "ko-acc": "",
+            "ko-rule": "\"K1\"",
+            "ko-desc": "\"Bureau score below 660: outside the scorecard's range\""
+          },
+          {
+            "_id": "knockouts-2",
+            "ko-fico": "",
+            "ko-acc": ">= 10",
+            "ko-rule": "\"K2\"",
+            "ko-desc": "\"10 or more accounts opened in the last 24 months\""
+          },
+          {
+            "_id": "knockouts-3",
+            "ko-fico": "",
+            "ko-acc": "",
+            "ko-rule": "null",
+            "ko-desc": "null"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cutoffs",
+      "type": "decisionTableNode",
+      "name": "Score cut-offs",
+      "position": {
+        "x": 550,
+        "y": 200
+      },
+      "content": {
+        "hitPolicy": "first",
+        "passThrough": true,
+        "inputField": null,
+        "outputPath": null,
+        "inputs": [
+          {
+            "id": "ct-ko",
+            "name": "Knock-out",
+            "field": "knockout"
+          },
+          {
+            "id": "ct-score",
+            "name": "Score",
+            "field": "score"
+          },
+          {
+            "id": "ct-arm",
+            "name": "Arm",
+            "field": "arm"
+          },
+          {
+            "id": "ct-emp",
+            "name": "Employment length",
+            "field": "emp_length"
+          },
+          {
+            "id": "ct-inc",
+            "name": "Annual income",
+            "field": "annual_inc"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "ct-dec",
+            "name": "Decision",
+            "field": "decision"
+          },
+          {
+            "id": "ct-rule",
+            "name": "Rule",
+            "field": "decision_rule"
+          },
+          {
+            "id": "ct-desc",
+            "name": "Reason",
+            "field": "decision_description"
+          }
+        ],
+        "rules": [
+          {
+            "_id": "cutoffs-1",
+            "ct-ko": "$ != null",
+            "ct-score": "",
+            "ct-arm": "",
+            "ct-emp": "",
+            "ct-inc": "",
+            "ct-dec": "\"REJECT\"",
+            "ct-rule": "knockout",
+            "ct-desc": "knockout_description"
+          },
+          {
+            "_id": "cutoffs-2",
+            "ct-ko": "",
+            "ct-score": "< 580",
+            "ct-arm": "",
+            "ct-emp": "",
+            "ct-inc": "",
+            "ct-dec": "\"REJECT\"",
+            "ct-rule": "\"S1\"",
+            "ct-desc": "\"Score below 580\""
+          },
+          {
+            "_id": "cutoffs-3",
+            "ct-ko": "",
+            "ct-score": "< 595",
+            "ct-arm": "\"champion\"",
+            "ct-emp": "",
+            "ct-inc": "",
+            "ct-dec": "\"REVIEW\"",
+            "ct-rule": "\"S2\"",
+            "ct-desc": "\"Score between 580 and the approval cut-off\""
+          },
+          {
+            "_id": "cutoffs-4",
+            "ct-ko": "",
+            "ct-score": "< 590",
+            "ct-arm": "\"challenger\"",
+            "ct-emp": "",
+            "ct-inc": "",
+            "ct-dec": "\"REVIEW\"",
+            "ct-rule": "\"S2\"",
+            "ct-desc": "\"Score between 580 and the approval cut-off\""
+          },
+          {
+            "_id": "cutoffs-5",
+            "ct-ko": "",
+            "ct-score": "",
+            "ct-arm": "",
+            "ct-emp": "$ == null",
+            "ct-inc": "",
+            "ct-dec": "\"REVIEW\"",
+            "ct-rule": "\"R1\"",
+            "ct-desc": "\"Employment length not reported\""
+          },
+          {
+            "_id": "cutoffs-6",
+            "ct-ko": "",
+            "ct-score": "",
+            "ct-arm": "",
+            "ct-emp": "",
+            "ct-inc": "$ == null",
+            "ct-dec": "\"REVIEW\"",
+            "ct-rule": "\"R2\"",
+            "ct-desc": "\"Annual income not reported\""
+          },
+          {
+            "_id": "cutoffs-7",
+            "ct-ko": "",
+            "ct-score": "",
+            "ct-arm": "",
+            "ct-emp": "",
+            "ct-inc": "",
+            "ct-dec": "\"APPROVE\"",
+            "ct-rule": "\"S3\"",
+            "ct-desc": "\"Score at or above the approval cut-off\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "limits",
+      "type": "decisionTableNode",
+      "name": "Limits",
+      "position": {
+        "x": 850,
+        "y": 200
+      },
+      "content": {
+        "hitPolicy": "first",
+        "passThrough": true,
+        "inputField": null,
+        "outputPath": null,
+        "inputs": [
+          {
+            "id": "lm-dec",
+            "name": "Decision",
+            "field": "decision"
+          },
+          {
+            "id": "lm-band",
+            "name": "Band",
+            "field": "band"
+          },
+          {
+            "id": "lm-score",
+            "name": "Score",
+            "field": "score"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "lm-max",
+            "name": "Maximum loan-to-income",
+            "field": "max_loan_to_income"
+          },
+          {
+            "id": "lm-rule",
+            "name": "Limit rule",
+            "field": "limit_rule"
+          }
+        ],
+        "rules": [
+          {
+            "_id": "limits-1",
+            "lm-dec": "\"REJECT\"",
+            "lm-band": "",
+            "lm-score": "",
+            "lm-max": "null",
+            "lm-rule": "null"
+          },
+          {
+            "_id": "limits-2",
+            "lm-dec": "",
+            "lm-band": "\"A\"",
+            "lm-score": "",
+            "lm-max": "0.40",
+            "lm-rule": "\"L1\""
+          },
+          {
+            "_id": "limits-3",
+            "lm-dec": "",
+            "lm-band": "\"B\"",
+            "lm-score": "",
+            "lm-max": "0.40",
+            "lm-rule": "\"L2\""
+          },
+          {
+            "_id": "limits-4",
+            "lm-dec": "",
+            "lm-band": "\"C\"",
+            "lm-score": ">= 595",
+            "lm-max": "0.30",
+            "lm-rule": "\"L3\""
+          },
+          {
+            "_id": "limits-5",
+            "lm-dec": "",
+            "lm-band": "\"C\"",
+            "lm-score": "",
+            "lm-max": "0.10",
+            "lm-rule": "\"L4\""
+          },
+          {
+            "_id": "limits-6",
+            "lm-dec": "",
+            "lm-band": "\"D\"",
+            "lm-score": "",
+            "lm-max": "0.10",
+            "lm-rule": "\"L4\""
+          },
+          {
+            "_id": "limits-7",
+            "lm-dec": "",
+            "lm-band": "",
+            "lm-score": "",
+            "lm-max": "null",
+            "lm-rule": "\"L0\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "amount",
+      "type": "expressionNode",
+      "name": "Approved amount",
+      "position": {
+        "x": 1150,
+        "y": 200
+      },
+      "content": {
+        "passThrough": true,
+        "expressions": [
+          {
+            "id": "amt-1",
+            "key": "limit",
+            "value": "max_loan_to_income == null or annual_inc == null ? null : min([40000, max([1000, floor(max_loan_to_income * annual_inc)])])"
+          },
+          {
+            "id": "amt-2",
+            "key": "approved_amount",
+            "value": "$.limit == null ? null : min([loan_amnt, $.limit])"
+          }
+        ]
+      }
+    },
+    {
+      "id": "response",
+      "type": "outputNode",
+      "name": "Decision",
+      "position": {
+        "x": 1450,
+        "y": 200
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "sourceId": "request",
+      "targetId": "knockouts",
+      "type": "edge"
+    },
+    {
+      "id": "e1",
+      "sourceId": "knockouts",
+      "targetId": "cutoffs",
+      "type": "edge"
+    },
+    {
+      "id": "e2",
+      "sourceId": "cutoffs",
+      "targetId": "limits",
+      "type": "edge"
+    },
+    {
+      "id": "e3",
+      "sourceId": "limits",
+      "targetId": "amount",
+      "type": "edge"
+    },
+    {
+      "id": "e4",
+      "sourceId": "amount",
+      "targetId": "response",
+      "type": "edge"
+    }
+  ]
+}

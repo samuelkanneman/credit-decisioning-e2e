@@ -22,6 +22,7 @@ dev = [
     "httpx>=0.27",
     "pytest>=8",
     "ruff>=0.6",
+    "decision-service",
     "score-api",
 ]
 load = [
@@ -39,6 +40,7 @@ members = ["services/*"]
 
 [tool.uv.sources]
 score-api = { workspace = true }
+decision-service = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

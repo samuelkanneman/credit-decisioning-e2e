@@ -175,12 +175,20 @@ Loans in each cell:
 
 ## Proposed policy
 
-Impact of the policy in `docs/policy.md` on this population: reject below a bureau score of 660, with more than 9 accounts opened in 24 months, or with a score below 580; approve from 595; review in between and when employment length is not reported.
+Impact of the policy in `docs/policy.md` on this population: reject below a bureau score of 660, with more than 9 accounts opened in 24 months, or with a score below 580; approve from 595; review in between and when employment length or income is not reported.
 
 | decision | % of applicants | bad 12m % | charged off % | margin % of lent | margin under stress % | profit per 1,000 applicants, $k | under stress, $k |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | APPROVE | 48.59 | 1.32 | 8.19 | 2.83 | 1.39 | 191.97 | 91.85 |
 | REVIEW | 28.58 | 3.09 | 16.17 | 1.62 | -1.20 | 54.21 | -40.47 |
+| REJECT | 22.82 | 5.24 | 23.95 | -1.68 | -5.64 | -43.36 | -151.71 |
+
+Challenger arm (approves from 590):
+
+| decision | % of applicants | bad 12m % | charged off % | margin % of lent | margin under stress % | profit per 1,000 applicants, $k | under stress, $k |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| APPROVE | 57.42 | 1.51 | 9.12 | 2.77 | 1.17 | 217.80 | 90.60 |
+| REVIEW | 19.75 | 3.31 | 17.04 | 1.26 | -1.72 | 28.37 | -39.22 |
 | REJECT | 22.82 | 5.24 | 23.95 | -1.68 | -5.64 | -43.36 | -151.71 |
 
 Limits by band:

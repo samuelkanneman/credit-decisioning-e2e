@@ -1,6 +1,6 @@
 # Credit policy
 
-Status: **proposed**, version `policy-v1` · 2026-11-17. Applies to individual applications scored with `scorecard-v1`.
+Status: **proposed**, version `policy-v1` · 2026-11-17. Applies to individual applications scored with `scorecard-v1`. Implemented in [`policy/credit-policy.json`](../policy/credit-policy.json) and served by the decision service.
 
 Every number below comes from the generated [policy analysis](policy_analysis.md): individual 36-month loans issued 2013–2015 that ran their full term, profit measured from realised cash flows ([ADR-004](adr/004-profitability-and-lgd.md)). "Under stress" means 1.34 times as many charge-offs.
 
@@ -15,6 +15,7 @@ Rules are evaluated in this order. The first knock-out that fires decides.
 | S1 | Score below 580 | Reject | Credit policy |
 | S2 | Score from 580 to 594 | Review | Credit policy |
 | R1 | Score 595 or above, employment length not reported | Review | Credit policy |
+| R2 | Score 595 or above, annual income not reported | Review | Credit policy |
 | S3 | Score 595 or above | Approve, with the limit of its band | Credit policy |
 
 On the analysis population this approves 48.6% of applicants, sends 28.6% to review and rejects 22.8%.
@@ -36,6 +37,8 @@ On the analysis population this approves 48.6% of applicants, sends 28.6% to rev
 **S2. Score 580 to 594: review.** These loans make money in the base case (0.77% to 2.10%) and lose it under stress (−2.50% to −0.46%). Approving them automatically bets that conditions stay as in 2013–2015; rejecting them gives up 54 thousand dollars of profit per 1,000 applicants. A reviewer decides, with a conservative limit.
 
 **R1. Employment length not reported: review.** Among score-approved loans this group (5.6%) has a margin of 1.13% and −1.07% under stress, and 13.9% charged off against 8.6%. Not enough to reject, enough to ask.
+
+**R2. Annual income not reported: review.** Without income there is no limit to apply. Lending Club required income, so the analysis population has no such case; the rule exists for the engine, not because the data asked for it.
 
 **S3. Score 595 or above: approve.** Profit under stress peaks at a cut-off of 595, and every slice from 595 up keeps a positive margin under stress.
 
@@ -80,7 +83,14 @@ Ranking by Lending Club's own sub-grade gives a slightly lower charge-off rate (
 
 ## Champion and challenger
 
-10% of applications, chosen by a hash of the application ID, are decided by a challenger policy that approves from 590 instead of 595. The slice 590–594 holds 9.9% of applicants with a margin of 2.10% and −0.46% under stress. The test answers whether the stress case is too cautious, at a bounded cost.
+10% of applications go to a challenger policy that approves from 590 instead of 595. The arm comes from the SHA-256 of the application ID, so the same application always gets the same policy, and it is recorded with every decision.
+
+| Arm | Approve | Review | Reject | Margin on approved | Under stress |
+| --- | --- | --- | --- | --- | --- |
+| Champion (from 595) | 48.6% | 28.6% | 22.8% | 2.83% | 1.39% |
+| Challenger (from 590) | 57.4% | 19.8% | 22.8% | 2.77% | 1.17% |
+
+The challenger approves the slice 590–594, which makes money in the base case and loses it under stress. It answers whether the stress case is too cautious, at a bounded cost. Its extra approvals sit in band C below 595 and get the conservative limit of 10% of income (rule L4), not the 30% of approved band C.
 
 ## What this policy does not know
 
@@ -91,4 +101,7 @@ Ranking by Lending Club's own sub-grade gives a slightly lower charge-off rate (
 
 ## Changing this policy
 
-The rules live as versioned JSON in `policy/`, each with tests on its boundary cases. A change is a pull request that carries the regenerated impact table, and the policy version is stored with every decision.
+- **Where the rules live.** [`policy/credit-policy.json`](../policy/credit-policy.json) is a GoRules decision graph: a knock-out table, a cut-off table, a limit table and an expression for the amount. It opens in the GoRules visual editor. [`policy/manifest.json`](../policy/manifest.json) holds the version and the SHA-256 of the graph; the engine refuses to load a graph that does not match, so a rule cannot change without the version changing.
+- **Tests.** `tests/test_policy_rules.py` checks every rule on both sides of its boundary, the limits and amounts, and that the graph gives the same decision and limit as the code that produced the numbers in this document, for both arms.
+- **Impact.** A pull request that touches `policy/` gets a table of how many decisions move, on 20,000 applications, in the CI summary (`make policy-diff` locally).
+- **Trace.** Every decision stores the policy version and hash, the model version, the arm and the rules that fired.

@@ -194,29 +194,41 @@ def limit_matrix(df: pd.DataFrame, value: str) -> pd.DataFrame:
     return table.reindex(list("ABCDE")).rename_axis("band")
 
 
-# Proposed policy (docs/policy.md). Kept here so its impact is measured by the same code.
+# Proposed policy (docs/policy.md). The rules engine evaluates policy/credit-policy.json;
+# this vectorised copy measures its impact, and a test holds the two together.
 PROPOSED = {
     "min_fico": 660,  # below it the scorecard has no training data
     "max_accounts_opened_24m": 9,
     "reject_below": 580,
     "approve_from": 595,
+    "challenger_approve_from": 590,
     "max_loan_to_income": {"A": 0.40, "B": 0.40, "C": 0.30, "D": 0.10},
+    "max_loan_to_income_below_approval": 0.10,
 }
 
 
-def apply_policy(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.Series:
-    """Decision per loan: knock-outs first, then the score cut-offs."""
+def apply_policy(df: pd.DataFrame, policy: dict = PROPOSED, arm: str = "champion") -> pd.Series:
+    """Decision per loan: knock-outs first, then the score cut-offs, then review reasons."""
+    approve_from = policy["approve_from" if arm == "champion" else "challenger_approve_from"]
     decision = pd.Series("REVIEW", index=df.index)
-    decision[df["score"] >= policy["approve_from"]] = "APPROVE"
-    decision[df["emp_length"].isna() & (decision == "APPROVE")] = "REVIEW"
+    decision[df["score"] >= approve_from] = "APPROVE"
+    incomplete = df["emp_length"].isna() | df["annual_inc"].isna()
+    decision[incomplete & (decision == "APPROVE")] = "REVIEW"
     decision[df["score"] < policy["reject_below"]] = "REJECT"
     decision[df["acc_open_past_24mths"] > policy["max_accounts_opened_24m"]] = "REJECT"
     decision[df["fico"] < policy["min_fico"]] = "REJECT"
     return decision
 
 
-def policy_impact(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.DataFrame:
-    decision = apply_policy(df, policy)
+def max_loan_to_income(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.Series:
+    """Limit as a share of income by band. Band C keeps its limit only from the approval cut-off."""
+    cap = df["band"].map(policy["max_loan_to_income"])
+    below = (df["band"] == "C") & (df["score"] < policy["approve_from"])
+    return cap.mask(below, policy["max_loan_to_income_below_approval"])
+
+
+def policy_impact(df: pd.DataFrame, policy: dict = PROPOSED, arm: str = "champion"):
+    decision = apply_policy(df, policy, arm)
     rows = {}
     for name in ("APPROVE", "REVIEW", "REJECT"):
         part = df[decision == name]
@@ -236,13 +248,14 @@ def policy_impact(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.DataFrame:
 def limit_impact(df: pd.DataFrame, policy: dict = PROPOSED) -> pd.DataFrame:
     """Among approved loans, how many asked for more than their band's limit allows."""
     approved = df[apply_policy(df, policy) == "APPROVE"]
-    cap = approved["band"].map(policy["max_loan_to_income"]) * approved["annual_inc"]
-    over = approved["loan_amnt"] > cap.clip(upper=40_000)
+    share = max_loan_to_income(approved, policy)
+    cap = (share * approved["annual_inc"]).clip(lower=1_000, upper=40_000)
+    over = approved["loan_amnt"] > cap
     rows = {}
     for band, part in approved.groupby("band"):
         rows[band] = {
             "approved loans": len(part),
-            "max loan-to-income %": policy["max_loan_to_income"][band] * 100,
+            "max loan-to-income %": share.loc[part.index].max() * 100,
             "% asking above the limit": over.loc[part.index].mean() * 100,
         }
     return pd.DataFrame.from_dict(rows, orient="index").rename_axis("band")
@@ -334,6 +347,7 @@ def run(data: Path, models: Path) -> dict:
         "knockouts": knockout_table(df, cut_stress),
         "limits": {v: limit_matrix(df, v) for v in ("margin", "stress", "loans")},
         "impact": policy_impact(df),
+        "impact_challenger": policy_impact(df, arm="challenger"),
         "limit_impact": limit_impact(df),
         "ead_bad_12m": float(
             (df.loc[df[TARGET], "loan_amnt"] - df.loc[df[TARGET], "total_rec_prncp"]).sum()
@@ -402,8 +416,10 @@ def build_report(out: dict) -> str:
                 f"bureau score of {PROPOSED['min_fico']}, with more than "
                 f"{PROPOSED['max_accounts_opened_24m']} accounts opened in 24 months, or with a "
                 f"score below {PROPOSED['reject_below']}; approve from {PROPOSED['approve_from']}; "
-                "review in between and when employment length is not reported.",
+                "review in between and when employment length or income is not reported.",
                 to_markdown(out["impact"]),
+                f"Challenger arm (approves from {PROPOSED['challenger_approve_from']}):",
+                to_markdown(out["impact_challenger"]),
                 "Limits by band:",
                 to_markdown(out["limit_impact"]),
                 f"Balance at default of loans that go bad within 12 months: "
