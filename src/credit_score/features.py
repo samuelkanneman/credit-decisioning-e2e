@@ -6,6 +6,7 @@ Everything here uses only information available at application time.
 import numpy as np
 import pandas as pd
 
+from credit_score.bounds import DTI_MAX, HOME_OWNERSHIP, UTILISATION_MAX
 from credit_score.target import months_between
 
 NUMERIC = [
@@ -48,10 +49,7 @@ NUMERIC = [
 CATEGORICAL = ["purpose", "home_ownership", "verification_status"]
 FEATURES = NUMERIC + CATEGORICAL
 
-DTI_MAX = 100.0  # the raw file uses -1 and 999 as sentinels
-REVOL_UTIL_MAX = 200.0
 UTILISATION = ("revol_util", "bc_util")  # percentages; a few raw values are absurd
-HOME_OWNERSHIP = ("MORTGAGE", "RENT", "OWN")
 
 
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -68,11 +66,11 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     out["credit_history_months"] = months_between(df["issue_d"], df["earliest_cr_line"])
     out["dti"] = df["dti"].where(df["dti"].between(0, DTI_MAX))
     for name in UTILISATION:
-        out[name] = df[name].where(df[name].between(0, REVOL_UTIL_MAX))
+        out[name] = df[name].where(df[name].between(0, UTILISATION_MAX))
     income = df["annual_inc"].where(df["annual_inc"] > 0)
     out["annual_inc"] = income
     out["loan_to_income"] = (df["loan_amnt"] / income).replace([np.inf, -np.inf], np.nan)
     out["home_ownership"] = df["home_ownership"].where(
-        df["home_ownership"].isin(HOME_OWNERSHIP), "OTHER"
+        df["home_ownership"].isin(HOME_OWNERSHIP[:3]), "OTHER"
     )
     return out[FEATURES]

@@ -15,5 +15,22 @@ jobs:
       - run: uv sync --locked
       - run: make lint
       - run: make test
-      - name: Data pipeline on synthetic sample
-        run: make sample dataset binning train TRAIN_ARGS=--no-mlflow
+      - name: Full pipeline on synthetic data
+        run: make demo
+
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images and start the stack
+        run: make up
+      - name: Smoke test
+        run: make smoke
+      - name: Requests were logged to PostgreSQL
+        run: |
+          rows=$(docker compose exec -T postgres psql -U credit -d credit -tAc "select count(*) from score_log")
+          test "$rows" -eq 20
+      - if: failure()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down -v

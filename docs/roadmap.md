@@ -81,13 +81,15 @@ Hecho cuando: `make train` reproduce las mismas métricas dos veces seguidas y e
 
 ## Fase 2: API de scoring (`v0.2`)
 
-- [ ] Esquema pydantic generado a partir del contrato de datos de la Fase 1 (una sola fuente de verdad para rangos válidos).
-- [ ] Cálculo de puntos como función pura, sin dependencia de optbinning en runtime (lee la tabla de puntos).
-- [ ] Reason codes: diferencia contra el máximo de puntos de cada variable, top 3–4.
-- [ ] `POST /score`, `GET /health`, `GET /model-info`; `model_version` y `request_id` en cada respuesta.
-- [ ] Logging estructurado de entrada y salida a PostgreSQL.
-- [ ] Dockerfile multi-stage, usuario no root, healthcheck.
-- [ ] Tests: unitarios de puntos (score de la API = score del entrenamiento sobre una muestra), contrato (422 fuera de rango), carga corta con locust.
+- [x] Esquema pydantic generado desde `credit_score/bounds.py`, la misma tabla que genera el contrato pandera del entrenamiento.
+- [x] Cálculo de puntos en Python puro (`credit_score/scoring.py`), sin librerías de entrenamiento en runtime.
+- [x] Reason codes: diferencia contra el máximo de puntos de cada variable, hasta 4.
+- [x] `POST /score`, `GET /health`, `GET /model-info`; `model_version` y `request_id` en cada respuesta.
+- [x] Logging de entrada y salida a PostgreSQL (y a stdout como JSON).
+- [x] Dockerfile multi-stage, usuario no root, healthcheck. Imagen de 210 MB.
+- [x] Tests: paridad con el entrenamiento, contrato (422 fuera de rango), smoke test del stack y carga con locust.
+
+Verificado el 17-nov-2026 sobre el contenedor: 3.000 préstamos reales con score, PD y banda idénticos al entrenamiento; p95 de 15 ms con 20 usuarios concurrentes (unas 500 solicitudes por segundo, 12.973 sin fallas).
 
 Hecho cuando: paridad exacta entre el score offline y el de la API sobre 1.000 casos, y p95 < 50 ms en local.
 

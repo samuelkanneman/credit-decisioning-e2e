@@ -1,7 +1,13 @@
 # data and artifacts are never committed: `make data` rebuilds them
 /data/
 /mlruns/
-/models/
+/models/*
+# the exported scorecard is small, aggregate and what the scoring API serves
+!/models/scorecard-v1/
+/models/scorecard-v1/*
+!/models/scorecard-v1/card.json
+!/models/scorecard-v1/metadata.json
+/build/
 *.parquet
 *.csv
 *.csv.gz

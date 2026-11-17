@@ -21,7 +21,7 @@ Columns are read through an explicit whitelist (`src/credit_score/data/schema.py
 ## Consequences
 
 - Anyone reproducing the training needs their own Kaggle account. Tests, CI and the demo stack do not.
-- The repository redistributes no Lending Club data, real or derived.
+- The repository redistributes no loan-level Lending Club data. What it does commit is aggregate: reports and the fitted scorecard.
 - `grade`, `sub_grade`, `int_rate` and `installment` are outputs of Lending Club's own underwriting. They are excluded from the score and kept only as the legacy-policy baseline and for profitability.
 - The file is a final snapshot without monthly performance history, and the rejected file has few columns. Both constrain the target definition and reject inference; they are confirmed in the data audit and addressed in later ADRs.
 - The model is trained on applications Lending Club approved, so it carries that selection bias.

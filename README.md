@@ -6,7 +6,7 @@ End-to-end credit decisioning system: scorecard → scoring API → rules engine
 
 The point of this repository is the engineering and the credit policy around a model, not the model's AUC: how a score is built to risk standards, served, wrapped in a policy that is versioned as code, and monitored once it is making decisions.
 
-> **Status: work in progress.** The score (Phase 1) is done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
+> **Status: work in progress.** The score and the scoring API (Phases 1 and 2) are done; later phases are planned in [`docs/roadmap.md`](docs/roadmap.md) (Spanish).
 
 ## Architecture
 
@@ -48,22 +48,57 @@ Details: [model card](docs/model_card.md) · [validation report](docs/validation
 | --- | --- | --- |
 | 0. Foundations | Repo skeleton, reproducible data pipeline, CI | Done |
 | 1. Score | Calibrated scorecard, LightGBM challenger, out-of-time validation | Done |
-| 2. Scoring API | Containerised `/score` with reason codes | Planned |
+| 2. Scoring API | Containerised `/score` with reason codes | Done |
 | 3. Policy | Cut-off analysis, swap-set, reject inference, rules engine | Planned |
 | 4. Monitoring | Production traffic simulator and dashboard | Planned |
 | 5. MLOps | End-to-end CI with `docker compose` | Planned |
 
 ## Quickstart
 
+### Run the scoring API
+
+Requires Docker. The trained scorecard is in the repository, so no data is needed.
+
+```bash
+make up       # PostgreSQL + scoring API, docs at http://localhost:8000/docs
+make smoke    # scores 20 applications and checks the answers
+```
+
+```bash
+curl -s localhost:8000/score -H 'Content-Type: application/json' -d '{
+  "loan_amnt": 20000, "term": 60, "purpose": "debt_consolidation", "annual_inc": 52000,
+  "home_ownership": "RENT", "dti": 27.4, "fico": 675, "acc_open_past_24mths": 7,
+  "inq_last_6mths": 2, "mths_since_recent_inq": 1, "mo_sin_rcnt_tl": 3,
+  "mths_since_recent_bc": 6, "mo_sin_old_rev_tl_op": 95, "bc_open_to_buy": 1200,
+  "tot_hi_cred_lim": 48000}'
+```
+
+```json
+{
+  "request_id": "0b9c…", "model_version": "scorecard-v1",
+  "score": 537, "pd": 0.150, "band": "E",
+  "reasons": [
+    {"code": "R01", "description": "Too many accounts opened in the last 24 months", "points_lost": 15},
+    {"code": "R02", "description": "Credit bureau score too low", "points_lost": 14},
+    {"code": "R11", "description": "Loan amount too high relative to income", "points_lost": 14},
+    {"code": "R08", "description": "Insufficient available credit on bankcards", "points_lost": 13}
+  ]
+}
+```
+
+Reasons are the variables that cost the applicant the most points against the best bin of each variable. A value outside the ranges the model was trained on is rejected with a 422, never scored. Measured on the container: scores identical to training on 3,000 real loans, p95 of 15 ms at about 500 requests per second.
+
+### Rebuild the model
+
 Requires [uv](https://docs.astral.sh/uv/) and `make`.
 
 ```bash
 make setup
-make sample   # synthetic data with the real schema: no credentials needed
 make test
+make demo     # whole pipeline on synthetic data, no credentials; output in build/demo
 ```
 
-To work with the real data you need a Kaggle account and an [API token](https://www.kaggle.com/docs/api), exposed as `KAGGLE_API_TOKEN` (or `KAGGLE_USERNAME` and `KAGGLE_KEY` for a legacy key):
+To train on the real data you need a Kaggle account and an [API token](https://www.kaggle.com/docs/api), exposed as `KAGGLE_API_TOKEN` (or `KAGGLE_USERNAME` and `KAGGLE_KEY` for a legacy key):
 
 ```bash
 make data     # downloads from Kaggle (~650 MB), verifies SHA-256, builds parquet
@@ -73,7 +108,7 @@ make binning  # monotonic WoE bins, IV, stability, variable selection
 make train    # scorecard, challenger, out-of-time validation, model export, MLflow
 ```
 
-Data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic sample is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
+Loan data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic data is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
 
 ## How it is built
 
@@ -84,6 +119,7 @@ The project follows [data-science-harness](https://github.com/samuelkanneman/dat
 - [Model card](docs/model_card.md)
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
 - [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
+- [ADR-003: Scoring runtime and model artifact](docs/adr/003-scoring-runtime.md)
 - [Binning and variable selection](docs/binning.md)
 - [Experiment 001: scorecard and challenger](docs/experiments/001-scorecard.md), preregistered before training
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

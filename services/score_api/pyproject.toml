@@ -1,0 +1,21 @@
+[project]
+name = "score-api"
+version = "0.1.0"
+description = "Scoring API: score, PD, risk band and reason codes for one application"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "credit-score",
+    "fastapi>=0.115",
+    "psycopg[binary,pool]>=3.2",
+    "uvicorn>=0.30",
+]
+
+[tool.uv.sources]
+credit-score = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/score_api"]

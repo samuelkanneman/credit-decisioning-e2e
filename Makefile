@@ -1,7 +1,10 @@
-.PHONY: setup data sample dataset binning train audit lint test
+.PHONY: setup data demo dataset binning train audit lint test up down smoke loadtest
 
 RAW := data/raw
 PROCESSED := data/processed
+MODELS := models
+DOCS := docs
+DEMO := build/demo
 
 setup:
 	uv sync
@@ -11,26 +14,48 @@ data:
 	uv run --group data python -m credit_score.data.download --out $(RAW)
 	uv run python -m credit_score.data.prepare --raw $(RAW) --out $(PROCESSED)
 
-## Build a synthetic dataset with the same schema: no credentials, no real data
-sample:
-	uv run python -m credit_score.data.synthetic --out $(RAW) --rows 20000
-	uv run python -m credit_score.data.prepare --raw $(RAW) --out $(PROCESSED)
-
 ## Build the modelling dataset: population, target, split, features, contract check
 dataset:
 	uv run python -m credit_score.dataset --data $(PROCESSED)
 
 ## Fit monotonic bins, compute IV and stability, select variables
 binning:
-	uv run python -m credit_score.binning --data $(PROCESSED)
+	uv run python -m credit_score.binning --data $(PROCESSED) --models $(MODELS) \
+		--report $(DOCS)/binning.md
 
 ## Fit scorecard and challenger, validate on out-of-time, export the model, log to MLflow
 train:
-	uv run python -m credit_score.train --data $(PROCESSED) $(TRAIN_ARGS)
+	uv run python -m credit_score.train --data $(PROCESSED) --models $(MODELS) \
+		--report $(DOCS)/validation_report.md $(TRAIN_ARGS)
 
 ## Regenerate docs/data_audit.md from the processed data
 audit:
-	uv run python -m credit_score.data.audit --data $(PROCESSED)
+	uv run python -m credit_score.data.audit --data $(PROCESSED) --out $(DOCS)/data_audit.md
+
+## Run the whole pipeline on synthetic data, without credentials. Everything goes to
+## build/demo: the committed model and the reports in docs/ are left untouched.
+demo:
+	mkdir -p $(DEMO)/docs
+	uv run python -m credit_score.data.synthetic --out $(DEMO)/raw --rows 20000
+	uv run python -m credit_score.data.prepare --raw $(DEMO)/raw --out $(DEMO)/processed
+	$(MAKE) dataset binning train PROCESSED=$(DEMO)/processed MODELS=$(DEMO)/models \
+		DOCS=$(DEMO)/docs TRAIN_ARGS=--no-mlflow
+
+## Start PostgreSQL and the scoring API (http://localhost:8000/docs)
+up:
+	docker compose up -d --build --wait
+
+down:
+	docker compose down -v
+
+## Check a running stack end to end
+smoke:
+	python3 services/score_api/smoke_test.py
+
+## 20 concurrent users for 25 seconds against a running stack
+loadtest:
+	uv run --group load locust -f services/score_api/loadtest/locustfile.py \
+		--host http://127.0.0.1:8000 --headless -u 20 -r 20 -t 25s --only-summary
 
 lint:
 	uv run ruff check .

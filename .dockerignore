@@ -1,0 +1,8 @@
+*
+!pyproject.toml
+!uv.lock
+!src/
+!services/
+!models/scorecard-v1/card.json
+!models/scorecard-v1/metadata.json
+**/__pycache__
