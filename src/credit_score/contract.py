@@ -15,6 +15,24 @@ def _num(lo: float, hi: float | None = None, nullable: bool = False) -> pa.Colum
     return pa.Column(float, checks, nullable=nullable, coerce=True)
 
 
+BUREAU_DETAIL = [
+    "acc_open_past_24mths",
+    "mths_since_recent_inq",
+    "mo_sin_rcnt_tl",
+    "mo_sin_old_rev_tl_op",
+    "num_tl_op_past_12m",
+    "bc_open_to_buy",
+    "total_bc_limit",
+    "tot_cur_bal",
+    "avg_cur_bal",
+    "tot_hi_cred_lim",
+    "total_bal_ex_mort",
+    "num_actv_rev_tl",
+    "num_rev_tl_bal_gt_0",
+    "mths_since_recent_bc",
+    "total_rev_hi_lim",
+]
+
 MODELING_SCHEMA = pa.DataFrameSchema(
     {
         "id": pa.Column(str, unique=True),
@@ -43,7 +61,10 @@ MODELING_SCHEMA = pa.DataFrameSchema(
         "pub_rec_bankruptcies": _num(0, nullable=True),
         "revol_bal": _num(0, nullable=True),
         "revol_util": _num(0, REVOL_UTIL_MAX, nullable=True),
+        "bc_util": _num(0, REVOL_UTIL_MAX, nullable=True),
+        "percent_bc_gt_75": _num(0, 100, nullable=True),
         "mort_acc": _num(0, nullable=True),
+        **{name: _num(0, nullable=True) for name in BUREAU_DETAIL},
     },
     strict=False,  # pricing and outcome columns ride along for the policy analysis
 )

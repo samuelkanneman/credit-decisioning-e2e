@@ -1,4 +1,4 @@
-.PHONY: setup data sample dataset audit lint test
+.PHONY: setup data sample dataset binning audit lint test
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -19,6 +19,10 @@ sample:
 ## Build the modelling dataset: population, target, split, features, contract check
 dataset:
 	uv run python -m credit_score.dataset --data $(PROCESSED)
+
+## Fit monotonic bins, compute IV and stability, select variables
+binning:
+	uv run python -m credit_score.binning --data $(PROCESSED)
 
 ## Regenerate docs/data_audit.md from the processed data
 audit:

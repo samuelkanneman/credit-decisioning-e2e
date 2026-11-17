@@ -68,7 +68,7 @@ Hecho cuando: un clon limpio corre `make data && make test` sin intervención y 
 | Semana | Trabajo | Salida |
 | --- | --- | --- |
 | 1 ✅ | Contrato de datos con pandera; target, exclusiones; split temporal | ADR-002, `make dataset` → `modeling.parquet` |
-| 2 | Binning monotónico con optbinning, IV, correlación, PSI por variable entre períodos; selección final (10–15 variables) | Tabla de bins e IV versionada |
+| 2 ✅ | Binning monotónico con optbinning, IV, correlación, PSI por variable entre períodos; 17 variables seleccionadas | `make binning` → `docs/binning.md` |
 | 3 | Logística sobre WoE, escalado a puntos (600 = 50:1, PDO 20), calibración a PD, bandas de riesgo | Tabla de puntos exportada, artefacto del modelo |
 | 4 | Challenger LightGBM + SHAP; validación OOT (KS, AUC/Gini, lift, PSI, tasa de malos por banda); model card | Reporte de validación, `docs/model_card.md` |
 

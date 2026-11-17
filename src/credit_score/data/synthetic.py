@@ -89,6 +89,18 @@ def accepted(rows: int, seed: int = 0) -> pd.DataFrame:
             "recoveries": np.where(status == "Charged Off", (amount * 0.08).round(2), 0.0),
         }
     )
+    # Remaining whitelisted bureau columns: plausible magnitudes, no signal.
+    for col in ACCEPTED_COLUMNS:
+        if col.name in df.columns:
+            continue
+        if col.name.startswith(("mths_", "mo_sin_")):
+            df[col.name] = rng.integers(0, 120, rows)
+        elif col.name in ("bc_util", "percent_bc_gt_75"):
+            df[col.name] = (rng.beta(2.0, 2.0, rows) * 100).round(1)
+        elif col.name.startswith(("num_", "acc_")):
+            df[col.name] = rng.poisson(4, rows)
+        else:
+            df[col.name] = rng.lognormal(10.0, 1.0, rows).round(0)
     return df[[c.name for c in ACCEPTED_COLUMNS]]
 
 

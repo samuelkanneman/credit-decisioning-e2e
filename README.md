@@ -53,6 +53,7 @@ To work with the real data you need a Kaggle account and an [API token](https://
 make data     # downloads from Kaggle (~650 MB), verifies SHA-256, builds parquet
 make audit    # regenerates docs/data_audit.md
 make dataset  # population, target, split, features, data contract check
+make binning  # monotonic WoE bins, IV, stability, variable selection
 ```
 
 Data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic sample is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
@@ -61,4 +62,5 @@ Data is never committed. `make data` fetches it from the source and checks it ag
 
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
 - [ADR-002: Target definition and temporal split](docs/adr/002-target-and-split.md)
+- [Binning and variable selection](docs/binning.md)
 - [Data audit](docs/data_audit.md): cohort maturity and first look at the target

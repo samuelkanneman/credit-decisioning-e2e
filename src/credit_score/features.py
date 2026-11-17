@@ -27,12 +27,30 @@ NUMERIC = [
     "revol_bal",
     "revol_util",
     "mort_acc",
+    "acc_open_past_24mths",
+    "mths_since_recent_inq",
+    "mo_sin_rcnt_tl",
+    "mo_sin_old_rev_tl_op",
+    "num_tl_op_past_12m",
+    "bc_util",
+    "percent_bc_gt_75",
+    "bc_open_to_buy",
+    "total_bc_limit",
+    "tot_cur_bal",
+    "avg_cur_bal",
+    "tot_hi_cred_lim",
+    "total_bal_ex_mort",
+    "num_actv_rev_tl",
+    "num_rev_tl_bal_gt_0",
+    "mths_since_recent_bc",
+    "total_rev_hi_lim",
 ]
 CATEGORICAL = ["purpose", "home_ownership", "verification_status"]
 FEATURES = NUMERIC + CATEGORICAL
 
 DTI_MAX = 100.0  # the raw file uses -1 and 999 as sentinels
 REVOL_UTIL_MAX = 200.0
+UTILISATION = ("revol_util", "bc_util")  # percentages; a few raw values are absurd
 HOME_OWNERSHIP = ("MORTGAGE", "RENT", "OWN")
 
 
@@ -49,7 +67,8 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     out["fico"] = df["fico_range_low"]
     out["credit_history_months"] = months_between(df["issue_d"], df["earliest_cr_line"])
     out["dti"] = df["dti"].where(df["dti"].between(0, DTI_MAX))
-    out["revol_util"] = df["revol_util"].where(df["revol_util"].between(0, REVOL_UTIL_MAX))
+    for name in UTILISATION:
+        out[name] = df[name].where(df[name].between(0, REVOL_UTIL_MAX))
     income = df["annual_inc"].where(df["annual_inc"] > 0)
     out["annual_inc"] = income
     out["loan_to_income"] = (df["loan_amnt"] / income).replace([np.inf, -np.inf], np.nan)
