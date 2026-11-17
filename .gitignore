@@ -1,7 +1,7 @@
 # data and artifacts are never committed: `make data` rebuilds them
-data/
-mlruns/
-models/
+/data/
+/mlruns/
+/models/
 *.parquet
 *.csv
 *.csv.gz
