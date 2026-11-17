@@ -56,7 +56,9 @@ def accepted(rows: int, seed: int = 0) -> pd.DataFrame:
             "emp_length": rng.choice(np.array(EMP_LENGTHS, dtype=object), rows),
             "home_ownership": rng.choice(["RENT", "MORTGAGE", "OWN"], rows, p=[0.4, 0.5, 0.1]),
             "annual_inc": rng.lognormal(11.1, 0.5, rows).round(0),
-            "verification_status": rng.choice(["Verified", "Source Verified", "Not Verified"], rows),
+            "verification_status": rng.choice(
+                ["Verified", "Source Verified", "Not Verified"], rows
+            ),
             "addr_state": rng.choice(STATES, rows),
             "dti": dti,
             "fico_range_low": fico,
@@ -77,7 +79,10 @@ def accepted(rows: int, seed: int = 0) -> pd.DataFrame:
             "int_rate": rate,
             "installment": installment,
             "grade": np.array(list("ABCDEFG"))[grade_idx],
-            "sub_grade": [f"{'ABCDEFG'[g]}{n}" for g, n in zip(grade_idx, rng.integers(1, 6, rows))],
+            "sub_grade": [
+                f"{'ABCDEFG'[g]}{n}"
+                for g, n in zip(grade_idx, rng.integers(1, 6, rows), strict=True)
+            ],
             "loan_status": status,
             "last_pymnt_d": (issue + months_paid).dt.strftime("%b-%Y"),
             "total_pymnt": (installment * months_paid).round(2),
