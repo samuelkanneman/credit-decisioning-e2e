@@ -8,44 +8,44 @@ Bins are fitted on development (791,027 loans) with a monotonic bad-rate constra
 
 | variable | bins | IV | PSI within dev | PSI dev→oot | selected | reason if dropped |
 | --- | --- | --- | --- | --- | --- | --- |
-| acc_open_past_24mths | 8 | 0.11 | 0.02 | 0.01 | yes |  |
-| num_tl_op_past_12m | 6 | 0.11 | 0.03 | 0.01 | no | correlation 0.73 with acc_open_past_24mths |
-| fico | 8 | 0.09 | 0.00 | 0.01 | yes |  |
-| mths_since_recent_inq | 8 | 0.07 | 0.00 | 0.00 | yes |  |
-| mo_sin_rcnt_tl | 8 | 0.07 | 0.00 | 0.00 | yes |  |
-| inq_last_6mths | 4 | 0.07 | 0.04 | 0.01 | yes |  |
-| dti | 8 | 0.06 | 0.04 | 0.00 | yes |  |
-| verification_status | 3 | 0.05 | 0.04 | 0.01 | no | lender action, not a borrower attribute: Lending Club verified income more often on riskier applications |
-| mo_sin_old_rev_tl_op | 8 | 0.05 | 0.01 | 0.03 | yes |  |
-| bc_open_to_buy | 8 | 0.05 | 0.01 | 0.03 | yes |  |
-| purpose | 4 | 0.05 | 0.00 | 0.02 | yes |  |
-| tot_hi_cred_lim | 8 | 0.05 | 0.01 | 0.00 | yes |  |
-| loan_to_income | 8 | 0.04 | 0.00 | 0.02 | yes |  |
-| credit_history_months | 8 | 0.04 | 0.00 | 0.01 | no | correlation 0.87 with mo_sin_old_rev_tl_op |
-| total_bc_limit | 8 | 0.04 | 0.01 | 0.00 | no | correlation 0.75 with bc_open_to_buy |
-| avg_cur_bal | 8 | 0.04 | 0.00 | 0.00 | no | correlation 0.85 with tot_hi_cred_lim |
-| home_ownership | 3 | 0.04 | 0.00 | 0.01 | yes |  |
-| annual_inc | 8 | 0.04 | 0.00 | 0.01 | yes |  |
-| mths_since_recent_bc | 8 | 0.04 | 0.00 | 0.01 | yes |  |
-| tot_cur_bal | 8 | 0.04 | 0.00 | 0.00 | no | correlation 0.97 with tot_hi_cred_lim |
-| term | 2 | 0.04 | 0.01 | 0.02 | yes |  |
-| mort_acc | 6 | 0.03 | 0.01 | 0.02 | yes |  |
-| total_rev_hi_lim | 8 | 0.03 | 0.01 | 0.00 | yes |  |
-| emp_length | 6 | 0.02 | 0.00 | 0.01 | no | IV below 0.02 |
-| bc_util | 8 | 0.02 | 0.02 | 0.03 | no | IV below 0.02 |
-| percent_bc_gt_75 | 7 | 0.02 | 0.02 | 0.04 | no | IV below 0.02 |
-| revol_bal | 8 | 0.02 | 0.01 | 0.01 | no | IV below 0.02 |
-| revol_util | 6 | 0.01 | 0.02 | 0.03 | no | IV below 0.02 |
-| total_acc | 6 | 0.00 | 0.00 | 0.01 | no | IV below 0.02 |
-| loan_amnt | 3 | 0.00 | 0.00 | 0.01 | no | IV below 0.02 |
-| mths_since_last_delinq | 3 | 0.00 | 0.01 | 0.00 | no | IV below 0.02 |
-| num_actv_rev_tl | 2 | 0.00 | 0.00 | 0.01 | no | IV below 0.02 |
-| num_rev_tl_bal_gt_0 | 2 | 0.00 | 0.00 | 0.01 | no | IV below 0.02 |
-| total_bal_ex_mort | 3 | 0.00 | 0.01 | 0.00 | no | IV below 0.02 |
-| pub_rec | 2 | 0.00 | 0.00 | 0.00 | no | IV below 0.02 |
-| pub_rec_bankruptcies | 2 | 0.00 | 0.00 | 0.00 | no | IV below 0.02 |
-| delinq_2yrs | 3 | 0.00 | 0.00 | 0.00 | no | IV below 0.02 |
-| open_acc | 2 | 0.00 | 0.01 | 0.00 | no | IV below 0.02 |
+| acc_open_past_24mths | 8 | 0.1106 | 0.0221 | 0.0101 | yes |  |
+| num_tl_op_past_12m | 6 | 0.1051 | 0.0258 | 0.0134 | no | correlation 0.73 with acc_open_past_24mths |
+| fico | 8 | 0.0903 | 0.0026 | 0.0050 | yes |  |
+| mths_since_recent_inq | 8 | 0.0744 | 0.0037 | 0.0007 | yes |  |
+| mo_sin_rcnt_tl | 8 | 0.0712 | 0.0038 | 0.0020 | yes |  |
+| inq_last_6mths | 4 | 0.0683 | 0.0417 | 0.0125 | yes |  |
+| dti | 8 | 0.0624 | 0.0414 | 0.0007 | yes |  |
+| verification_status | 3 | 0.0507 | 0.0361 | 0.0066 | no | lender action, not a borrower attribute: Lending Club verified income more often on riskier applications |
+| mo_sin_old_rev_tl_op | 8 | 0.0493 | 0.0094 | 0.0253 | yes |  |
+| bc_open_to_buy | 8 | 0.0462 | 0.0120 | 0.0255 | yes |  |
+| purpose | 4 | 0.0456 | 0.0006 | 0.0197 | yes |  |
+| tot_hi_cred_lim | 8 | 0.0455 | 0.0051 | 0.0027 | yes |  |
+| loan_to_income | 8 | 0.0426 | 0.0016 | 0.0234 | yes |  |
+| credit_history_months | 8 | 0.0413 | 0.0048 | 0.0063 | no | correlation 0.87 with mo_sin_old_rev_tl_op |
+| total_bc_limit | 8 | 0.0398 | 0.0068 | 0.0043 | no | correlation 0.75 with bc_open_to_buy |
+| avg_cur_bal | 8 | 0.0397 | 0.0033 | 0.0004 | no | correlation 0.85 with tot_hi_cred_lim |
+| home_ownership | 3 | 0.0396 | 0.0041 | 0.0053 | yes |  |
+| annual_inc | 8 | 0.0391 | 0.0025 | 0.0060 | yes |  |
+| mths_since_recent_bc | 8 | 0.0373 | 0.0046 | 0.0064 | yes |  |
+| tot_cur_bal | 8 | 0.0365 | 0.0017 | 0.0014 | no | correlation 0.97 with tot_hi_cred_lim |
+| term | 2 | 0.0357 | 0.0065 | 0.0165 | yes |  |
+| mort_acc | 6 | 0.0324 | 0.0081 | 0.0153 | yes |  |
+| total_rev_hi_lim | 8 | 0.0311 | 0.0117 | 0.0049 | yes |  |
+| emp_length | 6 | 0.0192 | 0.0042 | 0.0083 | no | IV below 0.02 |
+| bc_util | 8 | 0.0188 | 0.0155 | 0.0327 | no | IV below 0.02 |
+| percent_bc_gt_75 | 7 | 0.0167 | 0.0230 | 0.0407 | no | IV below 0.02 |
+| revol_bal | 8 | 0.0153 | 0.0070 | 0.0097 | no | IV below 0.02 |
+| revol_util | 6 | 0.0076 | 0.0162 | 0.0329 | no | IV below 0.02 |
+| total_acc | 6 | 0.0040 | 0.0021 | 0.0105 | no | IV below 0.02 |
+| loan_amnt | 3 | 0.0021 | 0.0020 | 0.0059 | no | IV below 0.02 |
+| mths_since_last_delinq | 3 | 0.0018 | 0.0054 | 0.0035 | no | IV below 0.02 |
+| num_actv_rev_tl | 2 | 0.0014 | 0.0031 | 0.0066 | no | IV below 0.02 |
+| num_rev_tl_bal_gt_0 | 2 | 0.0012 | 0.0029 | 0.0064 | no | IV below 0.02 |
+| total_bal_ex_mort | 3 | 0.0009 | 0.0087 | 0.0038 | no | IV below 0.02 |
+| pub_rec | 2 | 0.0007 | 0.0033 | 0.0039 | no | IV below 0.02 |
+| pub_rec_bankruptcies | 2 | 0.0006 | 0.0001 | 0.0007 | no | IV below 0.02 |
+| delinq_2yrs | 3 | 0.0004 | 0.0014 | 0.0010 | no | IV below 0.02 |
+| open_acc | 2 | 0.0002 | 0.0076 | 0.0022 | no | IV below 0.02 |
 
 ## Highest WoE correlations among selected variables
 
@@ -112,7 +112,7 @@ Bad rates are shown for both samples: the ordering has to hold out of time.
 | [0.50, 1.50) | 27.19 | 3.41 | 26.15 | 4.58 |
 | [1.50, 2.50) | 10.16 | 4.40 | 8.39 | 5.81 |
 | [2.50, inf) | 5.55 | 5.46 | 3.95 | 7.61 |
-| Missing | 0.00 | 0.00 | 0.00 | 0.00 |
+| Missing | 0 | 0 | 0.00 | 0 |
 
 | dti | % loans dev | % bad dev | % loans oot | % bad oot |
 | --- | --- | --- | --- | --- |
@@ -124,7 +124,7 @@ Bad rates are shown for both samples: the ordering has to hold out of time.
 | [23.78, 26.22) | 7.76 | 3.67 | 7.71 | 4.62 |
 | [26.22, 30.51) | 10.34 | 3.97 | 10.67 | 5.32 |
 | [30.51, inf) | 9.01 | 4.95 | 9.66 | 6.48 |
-| Missing | 0.00 | 0.00 | 0.00 | 0.00 |
+| Missing | 0 | 0 | 0.00 | 0 |
 
 | mo_sin_old_rev_tl_op | % loans dev | % bad dev | % loans oot | % bad oot |
 | --- | --- | --- | --- | --- |

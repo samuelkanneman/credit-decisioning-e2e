@@ -4,11 +4,14 @@ version = "0.0.1"
 description = "End-to-end credit decisioning system on public Lending Club data"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "lightgbm>=4.5",
+    "mlflow>=3.0",
     "numpy>=2.0",
     "optbinning>=1.0",
     "pandas>=2.2",
     "pandera[pandas]>=0.26",
     "pyarrow>=17",
+    "statsmodels>=0.14",
 ]
 
 [dependency-groups]

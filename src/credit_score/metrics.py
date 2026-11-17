@@ -36,16 +36,22 @@ def gini(bad, score) -> float:
     return 2 * auc(bad, score) - 1
 
 
-def decile_table(bad, score) -> pd.DataFrame:
+def decile_table(bad, score, predicted=None) -> pd.DataFrame:
     """Deciles of the score, decile 1 being the riskiest.
 
     Ties are broken with a reproducible jitter of ±0.01 score points before
     cutting, so the buckets have equal size even when scores repeat.
+    ``predicted`` optionally adds the mean predicted probability of bad.
     """
-    bad, score = _evaluable(bad, score)
-    jittered = score + np.random.RandomState(KS_SEED).uniform(-KS_JITTER, KS_JITTER, len(score))
-    bucket = pd.qcut(jittered, q=10, duplicates="drop")
-    grouped = pd.DataFrame({"bad": bad, "score": score}).groupby(bucket, observed=True)
+    frame = pd.DataFrame({"bad": np.asarray(bad, dtype=float), "score": np.asarray(score, float)})
+    if predicted is not None:
+        frame["predicted"] = np.asarray(predicted, dtype=float)
+    frame = frame[np.isfinite(frame["bad"]) & np.isfinite(frame["score"])]
+    if frame["bad"].nunique() < 2:
+        raise ValueError("AUC and KS are undefined with a single class")
+    jitter = np.random.RandomState(KS_SEED).uniform(-KS_JITTER, KS_JITTER, len(frame))
+    bucket = pd.qcut(frame["score"].to_numpy() + jitter, q=10, duplicates="drop")
+    grouped = frame.groupby(bucket, observed=True)
     table = pd.DataFrame(
         {
             "min_score": grouped["score"].min(),
@@ -53,7 +59,10 @@ def decile_table(bad, score) -> pd.DataFrame:
             "loans": grouped.size(),
             "bads": grouped["bad"].sum(),
         }
-    ).sort_values("min_score")
+    )
+    if predicted is not None:
+        table["predicted_rate"] = grouped["predicted"].mean()
+    table = table.sort_values("min_score")
     table.index = pd.RangeIndex(1, len(table) + 1, name="decile")
     table["bad_rate"] = table["bads"] / table["loans"]
     goods = table["loans"] - table["bads"]

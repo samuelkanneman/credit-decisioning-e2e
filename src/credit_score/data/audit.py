@@ -42,9 +42,15 @@ def cohort_table(df: pd.DataFrame, freq: str) -> pd.DataFrame:
     return out
 
 
-def to_markdown(table: pd.DataFrame) -> str:
+def to_markdown(table: pd.DataFrame, decimals: int = 2) -> str:
+    """Render a DataFrame as a Markdown table; whole numbers print without decimals."""
+
     def fmt(v):
-        return f"{v:,.2f}" if isinstance(v, float) else f"{v:,}" if isinstance(v, int) else str(v)
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            return str(v)
+        if float(v).is_integer():
+            return f"{int(v):,}"
+        return f"{v:,.{decimals}f}"
 
     header = [table.index.name, *table.columns]
     lines = ["| " + " | ".join(header) + " |", "|" + " --- |" * len(header)]

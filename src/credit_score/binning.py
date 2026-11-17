@@ -139,7 +139,7 @@ def build_report(process, table: pd.DataFrame, dev: pd.DataFrame, oot: pd.DataFr
         f"kept variable is ≤ {MAX_CORRELATION}. The out-of-time columns are shown for "
         "information: no bin edge and no selection decision uses them.",
         "## Candidates",
-        to_markdown(table),
+        to_markdown(table, decimals=4),
         "## Highest WoE correlations among selected variables",
         to_markdown(pairs),
         "## Bins of the selected variables",

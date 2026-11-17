@@ -1,4 +1,4 @@
-.PHONY: setup data sample dataset binning audit lint test
+.PHONY: setup data sample dataset binning train audit lint test
 
 RAW := data/raw
 PROCESSED := data/processed
@@ -23,6 +23,10 @@ dataset:
 ## Fit monotonic bins, compute IV and stability, select variables
 binning:
 	uv run python -m credit_score.binning --data $(PROCESSED)
+
+## Fit scorecard and challenger, validate on out-of-time, export the model, log to MLflow
+train:
+	uv run python -m credit_score.train --data $(PROCESSED) $(TRAIN_ARGS)
 
 ## Regenerate docs/data_audit.md from the processed data
 audit:

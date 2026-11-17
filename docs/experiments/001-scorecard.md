@@ -1,6 +1,6 @@
 # Experiment 001: application scorecard and gradient-boosting challenger
 
-Status: **proposed** · preregistered 2026-11-17, before any model was trained. Results are added below once it runs; the criteria above them are not edited afterwards.
+Status: **adopted** · preregistered 2026-11-17, before any model was trained; criteria confirmed by the author and run the same day. Everything above "Results" is as it was written before the run.
 
 ## Hypothesis
 
@@ -52,8 +52,38 @@ Reported for every model and sample: loans, bads, AUC, Gini, canonical KS by dec
 
 ## Results
 
-Pending.
+Full tables are in the generated [validation report](../validation_report.md). Model `scorecard-v1`, 15 variables.
+
+| # | Criterion | Threshold | Observed | Met |
+| --- | --- | --- | --- | --- |
+| 1 | AUC gain over FICO alone, out-of-time | ≥ 0.05 | 0.0938 (0.6720 against 0.5782) | yes |
+| 2 | AUC drop, development to out-of-time | ≤ 0.03 | 0.0129 (0.6849 to 0.6720) | yes |
+| 3 | Score PSI, development to out-of-time | < 0.10 | 0.0026 | yes |
+| 4 | Bad rate by decile, out-of-time | monotonic | 9.39% in decile 1 down to 1.02% in decile 10, no inversions | yes |
+| 5 | Coefficients on WoE | same sign | all 15 negative | yes |
+
+| Model | AUC dev | AUC out-of-time | KS deciles out-of-time |
+| --- | --- | --- | --- |
+| FICO alone | 0.5808 | 0.5782 | 11.72% |
+| Scorecard | 0.6849 | 0.6720 | 24.48% |
+| LightGBM challenger | 0.7002 | 0.6819 | 26.15% |
+| Lending Club sub-grade (reference) | 0.7003 | 0.7072 | 29.58% |
+
+- **Challenger.** It beats the scorecard by 0.0099 AUC out of time, well inside the 0.03 margin set in advance, and loses more from development to out-of-time (0.0183 against 0.0129). Its ranking of variables by contribution agrees with the scorecard's.
+- **Calibration.** As expected, the model under-predicts out of time: 3.01% predicted against 4.01% observed, a ratio of 1.34 that is nearly flat across deciles (1.25 to 1.43). The score distribution did not move (PSI 0.0026, mean score 592.8 to 593.6), so this is a shift in the level of risk that the application variables do not explain, not a change in who applied. Ranking survives it; the PD does not.
+- **Reference.** Lending Club's sub-grade ranks better than both models (0.7072). It is the lender's own model, built on more information than this project allows itself, so the gap measures the cost of excluding it rather than a defect.
+- **Variables dropped while fitting.** `mort_acc` and `total_rev_hi_lim`, both not significant at 1% next to the other variables.
+
+### Deviations from the plan
+
+- The design says variables "whose coefficient is negative on WoE" are removed. That was a wording error: with WoE positive towards goods and bad as the event, the expected sign is negative, and the rule applied was "wrong sign", which is what criterion 5 states. No variable had the wrong sign.
+- Out-of-time was meant to be scored once. The full pipeline ran twice: the second run fixed number formatting in the report and the MLflow configuration. Nothing in the model changed between them (the exported card is byte-identical) and no decision was taken in between.
 
 ## Decision
 
-Pending.
+Adopt `scorecard-v1` as the champion. It meets the five criteria fixed in advance.
+
+Two consequences carry forward:
+
+1. The PD needs recalibration before it is used for anything priced or provisioned. Phase 3 uses the score for ranking and cut-offs and treats PD by band as a development-period estimate; Phase 4 monitors observed against predicted by band and defines when to recalibrate.
+2. The challenger stays as a monitored benchmark, not a candidate. A gap above 0.03 AUC on a matured production month would reopen the question.
