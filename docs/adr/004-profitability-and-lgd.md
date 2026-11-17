@@ -33,7 +33,7 @@ exposure at default    = 88% of the amount, the balance of loans that go bad in 
 
 ## Consequences
 
-- The cut-off analysis has no PD, LGD or prepayment model inside it, so it cannot be wrong about them. Its weak point is the funding cost, which is an assumption and moves the answer: without it every loan from a score of about 565 looks profitable.
+- The cut-off analysis has no PD, LGD or prepayment model inside it, so it cannot be wrong about them. Its weak point is the funding cost, which is an assumption and moves the answer: without it every score slice from about 555 up looks profitable, against 580 with it.
 - The economics are in-sample for the scorecard (development years). The model's ranking held out of time, so the ordering of the curve is reliable; its level is what the stress case covers.
 - Margins are at Lending Club's prices, which were set by a grade this project does not use. A lender pricing by this score would see different margins.
 - 60-month loans are excluded from the economics because most had not matured by the snapshot. They are riskier at the same score, and term is a scorecard variable, so the score cut-off already moves them down; their economics are not verified.
