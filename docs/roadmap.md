@@ -53,8 +53,8 @@ Si falta tiempo se recorta, en este orden: nube opcional, workflow de KNIME, cha
 - [x] Esqueleto del monorepo: `src/credit_score/`, `tests/`, `docs/`. Las demás carpetas se crean en la fase que les da contenido.
 - [x] `pyproject.toml` + `uv.lock`, ruff, pytest, `.gitignore` (con `data/` y `mlruns/`).
 - [x] `make data`: descarga, verificación de SHA-256, conversión a parquet.
-- [ ] Notebook `00_data_audit`: filas por mes de emisión, estados, **meses de maduración por cohorte** (resuelve R1 y D2), nulos por columna y por año.
-- [ ] Lista blanca de variables candidatas (`docs/data_dictionary.md`) con el momento en que se conoce cada una.
+- [x] Auditoría de datos reproducible (`make audit` → `docs/data_audit.md`): cohortes, maduración, estados y nulos.
+- [x] Lista blanca de variables con su rol (`src/credit_score/data/schema.py`).
 - [x] Generador de muestra sintética con el mismo esquema, para tests y CI.
 - [x] CI mínimo: ruff + pytest. Badge en el README.
 - [x] README inicial: una frase, diagrama Mermaid, estado por fase.
@@ -131,6 +131,9 @@ Hecho cuando: un tercero clona, corre `make data && docker compose up` y ve una 
 
 ## Verificado al 17-nov-2026
 
-Versiones publicadas en PyPI, todas compatibles con Python 3.12: optbinning 1.0.0, zen-engine 2.1.7, evidently 0.7.23, lightgbm 4.7.0, mlflow 3.18.0, pandera 0.36.0, shap 0.54.1.
-
-Sin verificar todavía: disponibilidad y licencia del mirror de Kaggle, tamaños y rango de fechas exactos de los archivos, y los riesgos R1–R3, que salen de conocimiento previo del dataset y se confirman en la auditoría de datos de la Fase 0.
+- Mirror de Kaggle `wordsforthewise/lending-club`: disponible, licencia CC0 (dominio público). Hashes SHA-256 fijados en `data_manifest.json`.
+- Aprobados: 2.260.668 préstamos emitidos entre 2007-06 y 2018-12. Rechazados: 27.648.741 solicitudes. Foto de los datos: marzo de 2019.
+- **R1 confirmado**: 2018 no madura (tasa de malos a 12 meses truncada desde las emisiones de marzo de 2018). 2017 completo sí madura para una ventana de 12 meses.
+- **R2 confirmado**: solo hay estado final y mes del último pago. El proxy de "malo a 12 meses" da entre 2,6% y 4,0% por año de emisión (ver `docs/data_audit.md`).
+- **R3 confirmado**: el archivo de rechazados tiene 8 columnas útiles y el score de riesgo viene nulo en el 67% de los casos.
+- Versiones en PyPI con soporte declarado para Python 3.12: optbinning 1.0.0, zen-engine 2.1.7, evidently 0.7.23, lightgbm 4.7.0, mlflow 3.18.0, pandera 0.36.0, shap 0.54.1. Todavía sin instalar.

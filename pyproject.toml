@@ -15,7 +15,7 @@ dev = [
     "ruff>=0.6",
 ]
 data = [
-    "kaggle>=1.6",
+    "requests>=2.32",
 ]
 
 [build-system]

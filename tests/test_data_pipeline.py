@@ -71,3 +71,27 @@ def test_hash_verification(tmp_path):
 def test_manifest_is_well_formed():
     manifest = json.loads(download.MANIFEST.read_text())
     assert manifest["dataset"] and manifest["files"]
+
+
+def test_proxy_bad_uses_months_on_book():
+    from credit_score.data import audit
+
+    df = pd.DataFrame(
+        {
+            "issue_d": pd.to_datetime(["2016-01-01"] * 4),
+            "last_pymnt_d": pd.to_datetime(["2016-09-01", "2016-10-01", None, "2016-03-01"]),
+            "loan_status": ["Charged Off", "Charged Off", "Charged Off", "Fully Paid"],
+        }
+    )
+    out = audit.add_proxy_bad(df)
+    # last payment at month 8 -> 90 dpd at month 12: inside the window; month 9 is outside
+    assert out["bad_12m"].tolist() == [True, False, True, False]
+    assert out["bad_18m"].tolist() == [True, True, True, False]
+
+
+def test_audit_report_builds(processed):
+    from credit_score.data import audit
+
+    _, accepted, rejected = processed
+    report = audit.build_report(accepted, rejected)
+    assert "## Cohorts by issue year" in report and "| 2016 |" in report
