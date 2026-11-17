@@ -47,10 +47,11 @@ make sample   # synthetic data with the real schema: no credentials needed
 make test
 ```
 
-To work with the real data you need a Kaggle account and an [API token](https://www.kaggle.com/docs/api) configured on your machine:
+To work with the real data you need a Kaggle account and an [API token](https://www.kaggle.com/docs/api), exposed as `KAGGLE_API_TOKEN` (or `KAGGLE_USERNAME` and `KAGGLE_KEY` for a legacy key):
 
 ```bash
-make data     # downloads from Kaggle, verifies SHA-256, builds parquet
+make data     # downloads from Kaggle (~650 MB), verifies SHA-256, builds parquet
+make audit    # regenerates docs/data_audit.md
 ```
 
 Data is never committed. `make data` fetches it from the source and checks it against the hashes in [`data_manifest.json`](data_manifest.json). The synthetic sample is random by construction and supports no conclusion about credit risk; it exists so tests and CI run without the real files.
@@ -58,3 +59,4 @@ Data is never committed. `make data` fetches it from the source and checks it ag
 ## Design decisions
 
 - [ADR-001: Dataset and data access](docs/adr/001-dataset.md)
+- [Data audit](docs/data_audit.md): cohort maturity and first look at the target
